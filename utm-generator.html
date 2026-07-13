@@ -1,0 +1,2448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UTM Generator | The Team Performance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #100906; --navy2: #1f1512;
+  --teal: #2E7040; --teal2: #245c33; --teal-bg: #eef5f0;
+  --red: #b5341b; --border: #D9D9D6;
+  --bg: #FFFDF8; --text: #100906; --muted: #97999B;
+  --shadow: 0 2px 16px rgba(16,9,6,0.09);
+  --radius: 10px;
+}
+body { font-family: 'Gotham', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Login */
+.login-overlay { position: fixed; inset: 0; background: #100906; display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.login-card { background: #fff; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.35); padding: 40px 36px; width: 100%; max-width: 380px; text-align: center; }
+.login-logo { width: 64px; height: 64px; background: var(--teal); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.login-logo span { color: #fff; font-weight: 800; font-size: 22px; letter-spacing: -1px; }
+.login-card h2 { font-size: 21px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.login-card .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 26px; }
+.login-fld { text-align: left; margin-bottom: 16px; }
+.login-fld label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.login-fld input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s; }
+.login-fld input:focus { border-color: var(--teal); }
+.login-btn { width: 100%; padding: 13px; background: var(--teal); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: background .15s; }
+.login-btn:hover { background: var(--teal2); }
+.login-error { color: var(--red); font-size: 13px; font-weight: 600; margin-top: 12px; display: none; }
+#appContent { display: none; }
+
+/* Header */
+.hdr { background: var(--navy); color: #fff; padding: 18px 40px; display: flex; align-items: center; gap: 14px; border-bottom: 3px solid var(--teal); position: sticky; top: 0; z-index: 100; }
+.hdr-logo { width: 40px; height: 40px; background: var(--teal); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; letter-spacing: -1px; }
+.hdr h1 { font-size: 18px; font-weight: 700; }
+.hdr p { font-size: 11px; opacity: .55; margin-top: 1px; }
+.hdr-count { margin-left: auto; background: var(--teal); color: #fff; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; white-space: nowrap; transition: all .3s; }
+
+/* Stepper */
+.stepper { background: var(--navy2); padding: 14px 40px; display: flex; align-items: center; justify-content: center; gap: 0; }
+.stepper-step { display: flex; align-items: center; gap: 0; }
+.stepper-circle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #555; background: transparent; color: #555; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all .2s; }
+.stepper-step.active .stepper-circle { background: var(--teal); border-color: var(--teal); color: #fff; }
+.stepper-step.done .stepper-circle { background: transparent; border-color: var(--teal); color: var(--teal); }
+.stepper-label { font-size: 10px; font-weight: 600; color: #555; margin-left: 6px; white-space: nowrap; transition: color .2s; }
+.stepper-step.active .stepper-label { color: #fff; }
+.stepper-step.done .stepper-label { color: var(--teal); }
+.stepper-line { width: 32px; height: 2px; background: #555; margin: 0 4px; flex-shrink: 0; transition: background .2s; }
+.stepper-line.done { background: var(--teal); }
+
+/* Layout */
+.wrap { max-width: 1020px; margin: 0 auto; padding: 28px 18px 80px; }
+
+/* Card */
+.card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border); }
+.card-hdr { background: var(--navy); color: #fff; padding: 13px 22px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.card-hdr .chevron { margin-left: auto; font-size: 14px; transition: transform .2s; display: inline-block; }
+.card--open .card-hdr .chevron { transform: rotate(180deg); }
+.step-badge { width: 22px; height: 22px; background: var(--teal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.card-body { display: none; padding: 22px 24px; }
+.card--open .card-body { display: block; }
+
+/* Grid */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.span2 { grid-column: 1/-1; }
+
+/* Field */
+.fld { display: flex; flex-direction: column; }
+.fld label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+.req { color: var(--red); font-size: 13px; }
+.note { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--teal); font-size: 10.5px; font-style: italic; }
+.note-block { font-size: 11.5px; color: var(--teal); font-style: italic; margin-top: 5px; }
+.mt { margin-top: 14px; }
+
+/* Inputs */
+input[type=text], input[type=url], select {
+  width: 100%; padding: 9px 11px; border: 1.5px solid var(--border); border-radius: 6px;
+  font-size: 13px; font-family: inherit; color: var(--text); background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,184,148,.1); }
+input.req-field { border-color: #f8b4a0; background: #fff9f8; }
+input.req-field:focus { border-color: var(--teal); background: #fff; }
+.mono { font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; background: #f8f9fb; }
+input.mono { background: #f6f8fc; }
+.hidden { display: none !important; }
+
+/* Type buttons */
+.type-row { display: flex; gap: 10px; }
+.type-btn { flex: 1; padding: 14px 10px; border: 2px solid var(--border); border-radius: 9px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: all .15s; user-select: none; }
+.type-btn .ti { display: block; font-size: 26px; margin-bottom: 5px; }
+.type-btn.on { border-color: var(--teal); color: var(--navy); background: var(--teal-bg); font-weight: 700; }
+
+/* Divider */
+.div { height: 1px; background: var(--border); margin: 18px 0; }
+
+/* Tags */
+.tag-wrap { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 8px; display: flex; flex-wrap: wrap; gap: 5px; min-height: 40px; cursor: text; transition: border-color .15s; }
+.tag-wrap:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,184,148,.1); }
+.tag { display: inline-flex; align-items: center; gap: 3px; background: var(--navy); color: #fff; padding: 3px 7px 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.tag-x { cursor: pointer; opacity: .65; font-size: 13px; line-height: 1; padding: 0 2px; }
+.tag-x:hover { opacity: 1; }
+.tag-input { border: none; outline: none; font-size: 13px; padding: 2px 4px; min-width: 140px; flex: 1; }
+
+/* Quick options */
+.qopts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.qopt { padding: 3px 10px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; color: var(--muted); background: #fff; transition: all .12s; white-space: nowrap; }
+.qopt:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+
+/* Pill checkboxes */
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 13px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--muted); transition: all .12s; user-select: none; }
+.pill:hover { border-color: #adb5bd; }
+.pill.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.pill input { display: none; }
+
+/* Market cards */
+.mkt-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 8px; }
+.mkt-card {
+  display: grid;
+  grid-template-columns: 38px 1fr 1fr 2fr 32px;
+  gap: 8px; align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fafbfc;
+  margin-bottom: 0;
+}
+.mkt-card--linked { border-left: 3px solid var(--teal); }
+.mkt-flag { font-size: 22px; text-align: center; line-height: 1; }
+.mkt-card input { margin: 0; }
+.mkt-card label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; display: block; }
+.mkt-cell { display: flex; flex-direction: column; }
+.btn-rm { background: none; border: none; color: #b2bec3; cursor: pointer; padding: 4px; border-radius: 4px; font-size: 18px; line-height: 1; transition: color .12s; justify-self: end; }
+.btn-rm:hover { color: var(--red); }
+.mkt-connector { display: flex; justify-content: center; margin: 2px 0; z-index: 1; }
+.btn-link { background: none; border: 1.5px solid var(--border); border-radius: 20px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--muted); transition: all .12s; }
+.btn-link.linked { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+.mkt-gap { height: 6px; }
+
+/* Creative table */
+.tbl-scroll { overflow-x: auto; border: 1.5px solid var(--border); border-radius: 7px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 580px; }
+.tbl th { background: #f5f7fb; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.tbl td { padding: 5px 7px; border-bottom: 1px solid #f0f2f7; vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl select, .tbl input { padding: 6px 8px; min-width: 0; }
+
+/* Partner groups */
+.pg { border: 1.5px solid var(--border); border-radius: 9px; padding: 15px 16px; margin-bottom: 10px; background: #fafbfc; }
+.pg-hdr { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; flex-wrap: wrap; }
+.pg-hdr input { flex: 1; min-width: 130px; }
+.pg-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+.src-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 5px; }
+.src-tbl th { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; padding: 5px 7px; border-bottom: 1px solid var(--border); text-align: left; }
+.src-tbl td { padding: 4px 5px; border-bottom: 1px solid #f0f2f7; }
+.src-tbl tr:last-child td { border-bottom: none; }
+.src-tbl select, .src-tbl input { padding: 5px 7px; }
+
+/* Simple sources panel */
+.simple-sources-panel { border: 1.5px solid var(--border); border-radius: 9px; padding: 15px 16px; margin-bottom: 16px; background: #f6f9f7; border-color: #aad4b4; }
+.simple-sources-panel h4 { font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.simple-sources-panel .info-text { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+
+/* Locale rows */
+.locale-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 7px; }
+.locale-card { display: grid; grid-template-columns: 36px 1fr 2fr 32px; gap: 8px; align-items: center; border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 10px; background: #fafbfc; }
+.locale-flag-cell { font-size: 20px; text-align: center; line-height: 1; }
+
+/* Paid team confirmation */
+.confirm-wrap { background: var(--teal-bg); border: 1.5px solid #aad4b4; border-radius: 8px; padding: 13px 16px; transition: border-color .15s, background .15s; }
+.confirm-wrap.confirmed { background: #e2f2e6; border-color: var(--teal); }
+.confirm-label { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; user-select: none; }
+.confirm-label input[type=checkbox] { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: var(--teal); cursor: pointer; }
+.confirm-text { font-size: 13px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+.confirm-sub { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+
+/* Start over */
+.start-over-bar { display: flex; justify-content: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.btn-start-over { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: none; border: 1.5px solid var(--border); border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn-start-over:hover { border-color: var(--red); color: var(--red); background: #fdf5f3; }
+
+/* Checklist */
+.checklist-card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; border: 2px solid var(--teal); overflow: hidden; }
+.checklist-hdr { background: var(--navy); color: #fff; padding: 13px 22px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: 3px solid var(--teal); cursor: pointer; user-select: none; }
+.checklist-hdr .chevron { margin-left: auto; font-size: 14px; transition: transform .2s; display: inline-block; }
+.checklist-card--open .checklist-hdr .chevron { transform: rotate(180deg); }
+.checklist-body { display: none; padding: 20px 24px; }
+.checklist-card--open .checklist-body { display: block; }
+.cl-section { margin-bottom: 22px; }
+.cl-section:last-child { margin-bottom: 0; }
+.cl-section-hdr { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+.cl-section-hdr h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--navy); flex: 1; }
+.cl-count { background: var(--navy); color: #fff; border-radius: 20px; padding: 1px 9px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.cl-empty { color: var(--muted); font-size: 13px; font-style: italic; }
+.cl-utm-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.cl-utm-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid #EEEDE8; font-size: 12.5px; background: #fff; transition: background .1s; }
+.cl-utm-row:last-child { border-bottom: none; }
+.cl-utm-row:hover { background: #FAFAF7; }
+.cl-utm-row.cl-err { background: #FDF5F3; border-left: 3px solid var(--red); }
+.cl-row-num { min-width: 24px; text-align: right; font-size: 10.5px; color: #BBBCBC; font-weight: 700; flex-shrink: 0; font-family: monospace; }
+.cl-row-content { flex: 1; color: var(--navy); letter-spacing: .1px; }
+.cl-row-content strong { font-weight: 700; }
+.cl-row-content .sep { color: #BBBCBC; margin: 0 3px; }
+.cl-warn-badge { flex-shrink: 0; background: #FDF5F3; border: 1px solid #e8c4bb; border-radius: 20px; padding: 2px 8px; font-size: 10.5px; color: var(--red); font-weight: 600; cursor: help; white-space: nowrap; }
+.cl-alert { display: flex; align-items: center; gap: 7px; background: #FDF5F3; border: 1px solid #e8c4bb; border-radius: 6px; padding: 9px 12px; font-size: 12px; color: var(--red); font-weight: 500; margin-bottom: 6px; }
+.cl-global-errors { margin-bottom: 10px; }
+.cl-formula { font-size: 11.5px; color: var(--muted); margin-top: 9px; }
+.cl-formula strong { color: var(--teal); font-weight: 700; }
+
+/* Per-audience platforms */
+.aud-plat-row { display:flex; align-items:center; gap:12px; padding:7px 4px; border-bottom:1px solid #f0f2f7; }
+.aud-plat-row:last-child { border-bottom:none; }
+.aud-name { min-width:170px; font-size:12.5px; font-weight:600; color:var(--navy); flex-shrink:0; }
+.aud-plat-wrap { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.aud-plat-table { border:1.5px solid var(--border); border-radius:8px; padding:4px 12px; background:#fafbfc; }
+
+/* Next button */
+.next-btn-wrap { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.btn-next { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: var(--navy); color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.btn-next:hover { background: var(--navy2); }
+.btn-next svg { width: 16px; height: 16px; }
+
+/* Generate */
+.btn-gen { width: 100%; padding: 15px; background: var(--teal); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .15s; letter-spacing: .2px; margin-bottom: 16px; }
+.btn-gen:hover { background: var(--teal2); }
+
+/* Preview */
+.prev-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 16px; }
+.ptab { padding: 9px 18px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .12s; }
+.ptab.on { color: var(--navy); border-bottom-color: var(--teal); }
+.pcount { display: inline-flex; align-items: center; justify-content: center; background: var(--teal); color: #fff; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 600; margin-left: 5px; }
+.prev-wrap { overflow-x: auto; max-height: 370px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.prev-tbl { border-collapse: collapse; width: max-content; font-size: 12px; }
+.prev-tbl th { background: var(--navy); color: #fff; padding: 8px 11px; white-space: nowrap; position: sticky; top: 0; z-index: 1; font-size: 11px; }
+.prev-tbl td { padding: 6px 11px; border-bottom: 1px solid #f0f2f7; white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+.prev-tbl tr:hover td { background: #f8f9fb; }
+.url-cell { font-family: monospace; font-size: 11px; color: #0984e3; }
+.mc { font-family: monospace; font-size: 11px; }
+.dl-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
+.dl-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-dl { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; background: var(--navy); color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-dl:hover { background: var(--navy2); }
+.btn-dl:disabled { opacity: .6; cursor: not-allowed; }
+.btn-dl-client { background: var(--teal); }
+.btn-dl-client:hover { background: var(--teal2); }
+.btn-dl-push { background: #5a4fcf; }
+.btn-dl-push:hover { background: #4a3fbf; }
+.gen-info { font-size: 13px; color: var(--muted); }
+
+/* Add button */
+.btn-add { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px dashed var(--teal); border-radius: 6px; color: var(--teal); font-size: 12px; font-weight: 600; cursor: pointer; background: none; margin-top: 9px; transition: background .12s; }
+.btn-add:hover { background: var(--teal-bg); }
+
+/* Info box */
+.info-box { background: var(--teal-bg); border: 1px solid #a8dfd0; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; color: #1d7a5a; margin-bottom: 13px; }
+
+/* Modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(16,9,6,0.75); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.modal-card { background: #fff; border-radius: 12px; padding: 32px 36px; max-width: 480px; width: 90%; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+.modal-warn { font-size: 32px; margin-bottom: 12px; }
+.modal-title { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 14px; }
+.modal-body { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 22px; }
+.modal-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-modal-back { padding: 10px 20px; border: 1.5px solid var(--border); border-radius: 7px; background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-modal-back:hover { border-color: var(--red); color: var(--red); }
+.btn-modal-confirm { padding: 10px 20px; border: none; border-radius: 7px; background: var(--teal); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.btn-modal-confirm:hover { background: var(--teal2); }
+
+@media(max-width:700px){
+  .g2,.g3 { grid-template-columns: 1fr; }
+  .mkt-card { grid-template-columns: 30px 1fr 32px; }
+  .mkt-cell:nth-child(3) { display: none; }
+  .stepper-label { display: none; }
+  .stepper-line { width: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo"><span>T·T</span></div>
+    <h2>Performance Team UTM Generator</h2>
+    <p class="login-sub">Please log in to continue</p>
+    <form id="loginForm" autocomplete="off">
+      <div class="login-fld">
+        <label>Username</label>
+        <input type="text" id="loginUser" autocomplete="username" required>
+      </div>
+      <div class="login-fld">
+        <label>Password</label>
+        <input type="password" id="loginPass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn">Log in</button>
+      <p class="login-error" id="loginError">Incorrect username or password.</p>
+    </form>
+  </div>
+</div>
+
+<div id="appContent">
+
+<div class="hdr">
+  <div class="hdr-logo">T·T</div>
+  <div>
+    <h1>THE·TEAM — Performance Team UTM Link Generator</h1>
+    <p>Sports · Music · Entertainment</p>
+  </div>
+  <div class="hdr-count" id="hdrCount">0 UTMs</div>
+</div>
+
+<div class="stepper" id="stepper">
+  <div class="stepper-step active" id="stp-1">
+    <div class="stepper-circle" id="stp-circle-1">1</div>
+    <span class="stepper-label">Campaign Details</span>
+  </div>
+  <div class="stepper-line" id="stp-line-1"></div>
+  <div class="stepper-step" id="stp-2">
+    <div class="stepper-circle" id="stp-circle-2">2</div>
+    <span class="stepper-label">Campaign Type</span>
+  </div>
+  <div class="stepper-line" id="stp-line-2"></div>
+  <div class="stepper-step" id="stp-3">
+    <div class="stepper-circle" id="stp-circle-3">3</div>
+    <span class="stepper-label">Paid Details</span>
+  </div>
+  <div class="stepper-line" id="stp-line-3"></div>
+  <div class="stepper-step" id="stp-4">
+    <div class="stepper-circle" id="stp-circle-4">4</div>
+    <span class="stepper-label">Organic Details</span>
+  </div>
+  <div class="stepper-line" id="stp-line-4"></div>
+  <div class="stepper-step" id="stp-5">
+    <div class="stepper-circle" id="stp-circle-5">5</div>
+    <span class="stepper-label">Review &amp; Generate</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1: Campaign Details -->
+<div class="card card--open" id="sec-details">
+  <div class="card-hdr" onclick="openSection('sec-details')">
+    <span class="step-badge">1</span> Campaign Details
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
+    <div class="g2">
+      <div class="fld">
+        <label>Account / Client</label>
+        <input type="text" id="account" placeholder="e.g. British and Irish Lions" oninput="autoSlug(); scheduleChecklistUpdate()">
+      </div>
+      <div class="fld">
+        <label>Campaign Name</label>
+        <input type="text" id="campaignName" placeholder="e.g. Homegame Ticket Ballot September" oninput="autoSlug(); scheduleChecklistUpdate()">
+      </div>
+    </div>
+
+    <div class="fld mt">
+      <label>UTM Campaign Slug <span class="note">auto-generated as account_campaignname — edit if needed</span></label>
+      <input type="text" id="campaignSlug" class="mono" placeholder="e.g. lions_homegame_ticket_ballot" oninput="slugLocked=true;scheduleChecklistUpdate()">
+    </div>
+
+    <div class="fld mt">
+      <label>Campaign Partners <span class="note">optional — type partner name and press Enter</span></label>
+      <div class="tag-wrap" id="partnerWrap" onclick="document.getElementById('partnerInput').focus()">
+        <input class="tag-input" id="partnerInput" placeholder="Type partner name and press Enter… e.g. Lions, Howden" onkeydown="partnerTagKeydown(event)">
+      </div>
+      <div class="qopts">
+        <span class="qopt" onclick="addPartner('lions','Lions')">Lions</span>
+        <span class="qopt" onclick="addPartner('howden','Howden')">Howden</span>
+        <span class="qopt" onclick="addPartner('mastercard','Mastercard')">Mastercard</span>
+        <span class="qopt" onclick="addPartner('heineken','Heineken')">Heineken</span>
+        <span class="qopt" onclick="addPartner('o2','O2')">O2</span>
+      </div>
+    </div>
+
+    <div class="g3 mt">
+      <div class="fld">
+        <label>Campaign Mechanic</label>
+        <select id="mechanic" onchange="toggleCustom('mechanic'); scheduleChecklistUpdate()">
+          <option value="etw">Enter to Win (etw)</option>
+          <option value="bespoke_etw">Bespoke Enter to Win (bespoke_etw)</option>
+          <option value="builder">Builder</option>
+          <option value="content_click">Content Click</option>
+          <option value="content_views">Content Views</option>
+          <option value="custom">Custom...</option>
+        </select>
+        <input type="text" id="mechanic_custom" class="mono hidden" placeholder="custom mechanic slug" style="margin-top:5px" oninput="scheduleChecklistUpdate()">
+      </div>
+      <div class="fld">
+        <label>Sports Industry</label>
+        <select id="sport" onchange="toggleCustom('sport'); scheduleChecklistUpdate()">
+          <option value="rugby">Rugby</option>
+          <option value="football">Football</option>
+          <option value="golf">Golf</option>
+          <option value="cricket">Cricket</option>
+          <option value="tennis">Tennis</option>
+          <option value="motorsport">Motorsport</option>
+          <option value="custom">Custom...</option>
+        </select>
+        <input type="text" id="sport_custom" class="mono hidden" placeholder="custom sport slug" style="margin-top:5px" oninput="scheduleChecklistUpdate()">
+      </div>
+      <div class="fld">
+        <label>Partnership Industry</label>
+        <select id="partnership" onchange="toggleCustom('partnership'); scheduleChecklistUpdate()">
+          <option value="no_partnership">No Partnership</option>
+          <option value="travel">Travel</option>
+          <option value="insurance">Insurance</option>
+          <option value="finance">Finance</option>
+          <option value="automobile">Automobile</option>
+          <option value="food_beverage">Food &amp; Beverage</option>
+          <option value="apparel">Apparel</option>
+          <option value="technology">Technology</option>
+          <option value="energy">Energy</option>
+          <option value="custom">Custom...</option>
+        </select>
+        <input type="text" id="partnership_custom" class="mono hidden" placeholder="custom partnership slug" style="margin-top:5px" oninput="scheduleChecklistUpdate()">
+      </div>
+    </div>
+
+    <div class="g3 mt">
+      <div class="fld">
+        <label>Prizes</label>
+        <select id="prizes" onchange="scheduleChecklistUpdate()">
+          <option value="na">None (na)</option>
+          <option value="t1">Tier 1 — signed merch, drinks</option>
+          <option value="t2">Tier 2 — tickets, VIP</option>
+          <option value="t3">Tier 3 — flights, holidays</option>
+        </select>
+        <div class="note-block">Not sure which tier? Check with the Paid Media / Convert Team or your account lead.</div>
+      </div>
+      <div class="fld">
+        <label>Flight Dates <span class="note">e.g. jul26 or aug26-dec26</span></label>
+        <input type="text" id="dates" class="mono" placeholder="e.g. jul26 or always_on_2526" oninput="scheduleChecklistUpdate()">
+      </div>
+      <div class="fld">
+        <label>Landing Page URL <span class="req">*</span> <span class="note">required</span></label>
+        <input type="url" id="landingPage" class="req-field" placeholder="https://... (required)" oninput="this.classList.toggle('req-field', !this.value.trim()); scheduleChecklistUpdate()">
+      </div>
+    </div>
+
+    <div class="next-btn-wrap">
+      <button class="btn-next" onclick="openSection('sec-type')">
+        Next — Campaign Type
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: Campaign Type -->
+<div class="card" id="sec-type">
+  <div class="card-hdr" onclick="openSection('sec-type')">
+    <span class="step-badge">2</span> Campaign Type <span style="opacity:.5;font-size:11px;font-weight:400;margin-left:4px">select one or both</span>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
+    <div class="type-row">
+      <div class="type-btn" id="typePaid" onclick="toggleType('paid')">
+        <span class="ti">📣</span>Paid
+      </div>
+      <div class="type-btn" id="typeOrganic" onclick="toggleType('organic')">
+        <span class="ti">🌱</span>Organic
+      </div>
+    </div>
+    <div class="next-btn-wrap">
+      <button class="btn-next" onclick="openFirstActive()">
+        Next — Fill in Details
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: Paid Details -->
+<div class="card hidden" id="sec-paid">
+  <div class="card-hdr" onclick="openSection('sec-paid')">
+    <span class="step-badge">3</span> Paid UTM Details
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
+
+    <!-- Markets -->
+    <div class="fld">
+      <label>Markets <span class="note">add each market — optionally override the URL per market</span></label>
+      <div style="display:grid;grid-template-columns:38px 1fr 1fr 2fr 32px;gap:8px;padding:0 2px;margin-bottom:4px">
+        <span></span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">Display name</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">Slug</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">URL override (optional)</span>
+        <span></span>
+      </div>
+      <div class="mkt-list" id="mktList"></div>
+      <div class="qopts">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px">British Isles</span>
+        <span class="qopt" onclick="addMarket('UK','uk')">🇬🇧 UK</span>
+        <span class="qopt" onclick="addMarket('England','eng')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</span>
+        <span class="qopt" onclick="addMarket('Scotland','sco')">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland</span>
+        <span class="qopt" onclick="addMarket('Wales','wal')">🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales</span>
+        <span class="qopt" onclick="addMarket('Ireland','irl')">🇮🇪 Ireland</span>
+        <span class="qopt" onclick="addMarket('UK / IRE','uk_ire')">🇬🇧🇮🇪 UK/IRE</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Africa</span>
+        <span class="qopt" onclick="addMarket('South Africa','za')">🇿🇦 ZA</span>
+        <span class="qopt" onclick="addMarket('Namibia','nam')">🇳🇦 Namibia</span>
+        <span class="qopt" onclick="addMarket('Kenya','ke')">🇰🇪 Kenya</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Americas</span>
+        <span class="qopt" onclick="addMarket('USA','us')">🇺🇸 USA</span>
+        <span class="qopt" onclick="addMarket('Canada','ca')">🇨🇦 Canada</span>
+        <span class="qopt" onclick="addMarket('Brazil','br')">🇧🇷 Brazil</span>
+        <span class="qopt" onclick="addMarket('Argentina','arg')">🇦🇷 Argentina</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Europe</span>
+        <span class="qopt" onclick="addMarket('France','fr')">🇫🇷 France</span>
+        <span class="qopt" onclick="addMarket('Italy','it')">🇮🇹 Italy</span>
+        <span class="qopt" onclick="addMarket('Germany','de')">🇩🇪 Germany</span>
+        <span class="qopt" onclick="addMarket('Spain','es')">🇪🇸 Spain</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Asia Pacific</span>
+        <span class="qopt" onclick="addMarket('Australia','aus')">🇦🇺 Australia</span>
+        <span class="qopt" onclick="addMarket('New Zealand','nz')">🇳🇿 NZ</span>
+        <span class="qopt" onclick="addMarket('Japan','jp')">🇯🇵 Japan</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Middle East</span>
+        <span class="qopt" onclick="addMarket('Saudi Arabia','sa')">🇸🇦 SA</span>
+        <span class="qopt" onclick="addMarket('UAE','uae')">🇦🇪 UAE</span>
+        <span class="qopt" onclick="addMarket('GCC','gcc')">🌍 GCC</span>
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px;margin-left:4px">Other</span>
+        <span class="qopt" onclick="addMarket('Global','global')">🌍 Global</span>
+        <span class="qopt" onclick="addMarket('','')">+ Custom</span>
+      </div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Audience Interest -->
+    <div class="fld">
+      <label>Audience Interest Targeting <span class="note">type and press Enter, or click below</span></label>
+      <div class="tag-wrap" id="interestWrap" onclick="document.getElementById('interestInput').focus()">
+        <input class="tag-input" id="interestInput" placeholder="Type audience and press Enter..." onkeydown="tagKeydown(event)">
+      </div>
+      <div class="qopts">
+        <span class="qopt" onclick="addInterest('rugby_fans','Rugby Fans')">Rugby Fans</span>
+        <span class="qopt" onclick="addInterest('football_fans','Football Fans')">Football Fans</span>
+        <span class="qopt" onclick="addInterest('football_travel_fans','Football &amp; Travel')">Football &amp; Travel</span>
+        <span class="qopt" onclick="addInterest('sflal','SF LAL')">SF LAL</span>
+        <span class="qopt" onclick="addInterest('broad','Broad')">Broad</span>
+        <span class="qopt" onclick="addInterest('golf_fans','Golf Fans')">Golf Fans</span>
+        <span class="qopt" onclick="addInterest('travel_audience','Travel Audience')">Travel Audience</span>
+        <span class="qopt" onclick="addInterest('league_football_fans','League Football Fans')">League Football</span>
+      </div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Demographics -->
+    <div class="fld">
+      <label>Audience Demographic <span class="note">select all that apply</span></label>
+      <div class="pill-row">
+        <label class="pill on" id="dp-all" onclick="togglePill('d','all',event)"><input type="checkbox" id="d-all" checked> All</label>
+        <label class="pill" id="dp-female" onclick="togglePill('d','female',event)"><input type="checkbox" id="d-female"> Female</label>
+        <label class="pill" id="dp-male" onclick="togglePill('d','male',event)"><input type="checkbox" id="d-male"> Male</label>
+      </div>
+      <div class="note-block">Each selection creates separate UTM rows — to target all genders select <strong>All</strong> rather than Male + Female individually</div>
+      <div id="demoSwitchMsg" style="display:none;color:var(--teal);font-size:11.5px;margin-top:5px;">↩ Switched to All</div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Channel & Platforms -->
+    <div class="g2">
+      <div class="fld">
+        <label>Channel Type <span class="note">utm_medium</span></label>
+        <select id="channelType" onchange="toggleCustom('channelType'); scheduleChecklistUpdate()">
+          <option value="paid_social">Paid Social (paid_social)</option>
+          <option value="ppc">PPC</option>
+          <option value="display">Display</option>
+          <option value="paid_search">Paid Search</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input type="text" id="channelType_custom" class="mono hidden" placeholder="custom channel slug" style="margin-top:5px" oninput="scheduleChecklistUpdate()">
+      </div>
+      <div class="fld">
+        <div id="globalPlatSection">
+          <label>Platforms <span class="note">utm_source — select before adding audiences (initialises per-audience selection below)</span></label>
+          <div class="pill-row" id="platformPillRow">
+            <label class="pill" id="pp-meta" onclick="togglePill('p','meta',event)"><input type="checkbox" id="p-meta"> Meta</label>
+            <label class="pill" id="pp-facebook" onclick="togglePill('p','facebook',event)"><input type="checkbox" id="p-facebook"> Facebook</label>
+            <label class="pill" id="pp-instagram" onclick="togglePill('p','instagram',event)"><input type="checkbox" id="p-instagram"> Instagram</label>
+            <label class="pill" id="pp-x" onclick="togglePill('p','x',event)"><input type="checkbox" id="p-x"> X</label>
+            <label class="pill" id="pp-tiktok" onclick="togglePill('p','tiktok',event)"><input type="checkbox" id="p-tiktok"> TikTok</label>
+            <label class="pill" id="pp-google" onclick="togglePill('p','google',event)"><input type="checkbox" id="p-google"> Google</label>
+            <label class="pill" id="pp-linkedin" onclick="togglePill('p','linkedin',event)"><input type="checkbox" id="p-linkedin"> LinkedIn</label>
+            <label class="pill" id="pp-youtube" onclick="togglePill('p','youtube',event)"><input type="checkbox" id="p-youtube"> YouTube</label>
+            <div id="customPlatPills" style="display:contents"></div>
+          </div>
+        </div>
+        <div id="perAudiencePlatSection" class="hidden">
+          <label>Platforms per Audience <span class="note">utm_source — toggle platforms for each audience independently</span></label>
+          <div class="aud-plat-table" id="perAudiencePlatTable"></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+          <input type="text" id="customPlatInput" class="mono" style="max-width:200px;padding:6px 10px;font-size:12px;" placeholder="custom platform e.g. dv360" onkeydown="if(event.key==='Enter'){addCustomPlatform();event.preventDefault()}">
+          <button type="button" onclick="addCustomPlatform()" style="padding:6px 13px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Creative Variations -->
+    <div class="fld">
+      <label>Creative Variations <span class="note">one row per creative — all combinations generated across markets, audiences &amp; platforms</span></label>
+      <div class="tbl-scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="min-width:160px">CTA <span style="font-weight:400;text-transform:none">(utm_content pt.1)</span></th>
+              <th style="min-width:190px">Creative Detail <span style="font-weight:400;text-transform:none">imagery / colour / player (pt.2)</span></th>
+              <th style="min-width:140px">Test Variant <span style="font-weight:400;text-transform:none">(pt.3)</span></th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="creativesBody"></tbody>
+        </table>
+      </div>
+      <button class="btn-add" onclick="addCreative()">+ Add creative variation</button>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- UTM Term -->
+    <div class="fld">
+      <label>UTM Term <span class="note">utm_term — optional extra detail e.g. player name, language, theme · defaults to <code>na</code> if left blank</span></label>
+      <input type="text" id="utmTerm" class="mono" placeholder="leave blank for na, or e.g. en / player_name / lions" oninput="scheduleChecklistUpdate()">
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Paid Partner Sources -->
+    <div class="fld">
+      <label>Paid Partner Sources <span class="note">optional — add if running paid for multiple partner accounts</span></label>
+      <p style="font-size:12px;color:var(--muted);margin:5px 0 12px">When added, these <strong>replace</strong> the Platform pills above and set the utm_source to <code>{partner}_{platform}</code> e.g. <code>lions_meta</code>. Leave empty to use the Platform pills.</p>
+      <div id="paidPgContainer"></div>
+      <button class="btn-add" onclick="addPaidPG()">+ Add paid partner</button>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Paid Team Confirmation -->
+    <div class="fld">
+      <div class="confirm-wrap" id="confirmWrap">
+        <label class="confirm-label">
+          <input type="checkbox" id="paidTeamConfirmed" onchange="onConfirmChange()">
+          <span class="confirm-text">
+            Confirmed creative requirements with the paid team
+            <span class="confirm-sub">Sophia &amp; Fabio need the correct links to set up paid campaigns — make sure they have been briefed before generating.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="next-btn-wrap">
+      <button class="btn-next" onclick="openNextAfterPaid()">
+        Next
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4: Organic Details -->
+<div class="card hidden" id="sec-organic">
+  <div class="card-hdr" onclick="openSection('sec-organic')">
+    <span class="step-badge" id="organicStep">4</span> Organic UTM Details
+    <span class="chevron">▾</span>
+  </div>
+  <div class="card-body">
+    <div class="info-box">
+      💡 Organic UTMs use <strong>utm_campaign</strong>, <strong>utm_medium</strong>, and <strong>utm_source</strong> only — no market, audience, or content parameters.
+    </div>
+
+    <!-- Organic Locales -->
+    <div class="fld">
+      <label>Markets / URLs <span class="note">leave blank to use the main landing page for all — or add per-market URLs</span></label>
+      <div id="localeSyncBanner" class="info-box hidden" style="margin-bottom:8px;border-left:3px solid var(--teal);background:var(--teal-bg);color:var(--navy);font-size:12px;padding:9px 13px;border-radius:6px;">
+        🔗 Markets synced from Step 3 — edit names &amp; URLs there
+      </div>
+      <div class="locale-list" id="localeList"></div>
+      <div id="localeManualControls">
+        <div class="qopts">
+          <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;align-self:center;margin-right:2px">Quick add</span>
+          <span class="qopt" onclick="addLocale('UK','','🇬🇧')">🇬🇧 UK</span>
+          <span class="qopt" onclick="addLocale('England','','🏴󠁧󠁢󠁥󠁮󠁧󠁿')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</span>
+          <span class="qopt" onclick="addLocale('Ireland','','🇮🇪')">🇮🇪 Ireland</span>
+          <span class="qopt" onclick="addLocale('South Africa','','🇿🇦')">🇿🇦 ZA</span>
+          <span class="qopt" onclick="addLocale('Saudi Arabia','','🇸🇦')">🇸🇦 SA</span>
+          <span class="qopt" onclick="addLocale('UAE','','🇦🇪')">🇦🇪 UAE</span>
+          <span class="qopt" onclick="addLocale('Australia','','🇦🇺')">🇦🇺 Australia</span>
+          <span class="qopt" onclick="addLocale('New Zealand','','🇳🇿')">🇳🇿 NZ</span>
+          <span class="qopt" onclick="addLocale('USA','','🇺🇸')">🇺🇸 USA</span>
+          <span class="qopt" onclick="addLocale('France','','🇫🇷')">🇫🇷 France</span>
+          <span class="qopt" onclick="addLocale('Global','','🌍')">🌍 Global</span>
+          <span class="qopt" onclick="addLocale('','','🌐')">+ Custom</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="div"></div>
+
+    <!-- Simple Sources Panel -->
+    <div id="simpleSourcesPanel" class="simple-sources-panel">
+      <h4>Sources</h4>
+      <p class="info-text">Add your sources below. When you add a partner group, this panel is replaced by per-partner source tables.</p>
+      <table class="src-tbl">
+        <thead><tr>
+          <th style="width:160px">Medium (utm_medium)</th>
+          <th>Source (utm_source)</th>
+          <th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="simpleSourcesBody"></tbody>
+      </table>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center">
+        <span style="font-size:10.5px;color:var(--muted);font-weight:600;margin-right:3px">Quick add:</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','instagram')">Instagram</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','instagram_feed')">IG Feed</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','instagram_story')">IG Story</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','facebook')">Facebook</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','x')">X</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','linkedin')">LinkedIn</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','tiktok')">TikTok</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','youtube')">YouTube</span>
+        <span class="qopt" onclick="addSimpleSource('organic','email')">Email</span>
+        <span class="qopt" onclick="addSimpleSource('organic','email_enter_now')">Email Enter Now</span>
+        <span class="qopt" onclick="addSimpleSource('organic','email_solus')">Email Solus</span>
+        <span class="qopt" onclick="addSimpleSource('organic','email_last_chance')">Email Last Chance</span>
+        <span class="qopt" onclick="addSimpleSource('organic','email_inclusion')">Email Inclusion</span>
+        <span class="qopt" onclick="addSimpleSource('organic','newsletter')">Newsletter</span>
+        <span class="qopt" onclick="addSimpleSource('website','website_banner')">Website Banner</span>
+        <span class="qopt" onclick="addSimpleSource('website','website_inclusion')">Website Inclusion</span>
+        <span class="qopt" onclick="addSimpleSource('website','website')">Website</span>
+        <span class="qopt" onclick="addSimpleSource('app','app')">App</span>
+        <span class="qopt" onclick="addSimpleSource('copylink','copylink')">Copy Link</span>
+        <span class="qopt" onclick="addSimpleSource('organic_social','')">+ Custom</span>
+      </div>
+    </div>
+
+    <!-- Partner Groups -->
+    <div class="fld">
+      <label>Partners &amp; Accounts <span class="note">one group per brand posting content — each gets separate UTMs</span></label>
+      <p style="font-size:12px;color:var(--muted);margin:5px 0 12px">Add a partner name (e.g. "Lions"), then use quick-add or type custom sources. Sources are fully editable — e.g. change <code>lions_instagram</code> to <code>lions_instagram_story</code> or <code>lions_instagram_feed</code>.</p>
+      <div id="pgContainer"></div>
+      <button class="btn-add" onclick="addPartnerGroup()">+ Add partner / account</button>
+    </div>
+
+    <div class="next-btn-wrap">
+      <button class="btn-next" onclick="openSection('sec-checklist')">
+        Next — Review &amp; Generate
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9 4 13 8 9 12"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5: Checklist -->
+<div class="checklist-card" id="sec-checklist">
+  <div class="checklist-hdr" onclick="openSection('sec-checklist')">
+    📋 UTM Checklist
+    <span style="font-weight:400;opacity:.8;font-size:12px;margin-left:4px">— review everything before generating</span>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="checklist-body" id="checklistBody">
+    <p class="cl-empty">Fill in the form above to see a live preview of all UTMs that will be generated.</p>
+  </div>
+</div>
+
+<!-- Generate -->
+<button class="btn-gen" onclick="generate()">⚡ Generate UTMs</button>
+
+<!-- Preview -->
+<div class="card hidden" id="sec-preview">
+  <div class="card-hdr" style="cursor:default;">
+    Preview
+  </div>
+  <div class="card-body" style="display:block;">
+    <div class="prev-tabs" id="prevTabs"></div>
+    <div id="prevContent"></div>
+    <div class="dl-bar">
+      <span class="gen-info" id="genInfo"></span>
+      <div class="dl-btns">
+        <button class="btn-dl btn-dl-client" onclick="downloadExcelClient()">📋 Client Export</button>
+        <button class="btn-dl" onclick="downloadExcelInternal()">📊 Internal Export</button>
+        <button class="btn-dl btn-dl-push" id="pushBtn" onclick="pushToMasterSheet()">📤 Push to Master Sheet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="start-over-bar">
+  <button class="btn-start-over" onclick="startOver()">↺ Start Over — clear all fields</button>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- Modal -->
+<div id="genModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="modal-warn">⚠️⚠️⚠️</div>
+    <h2 class="modal-title">PLEASE CHECK YOUR UTMs CAREFULLY</h2>
+    <p class="modal-body" id="modalBodyText"></p>
+    <div class="modal-btns">
+      <button class="btn-modal-back" onclick="closeGenModal()">← Go back and check</button>
+      <button class="btn-modal-confirm" onclick="confirmGenModal()">✓ Looks good — show me the links</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+let isPaid = false, isOrganic = false;
+let markets = [];
+let customPlatforms = []; // [{display, slug, active}]
+let interests = [];
+let campaignPartners = [];
+let locales = [];
+let creativeId = 0, pgSourceId = 0, pgGroupId = 0, localeId = 0;
+let paidPgGroupId = 0, paidPgSrcId = 0;
+let ssrId = 0;
+let marketGroupCounter = 0;
+let generatedData = { paid: [], organic: [] };
+let checklistTimer = null;
+let slugLocked = false;
+let currentStep = 1;
+
+// ================================================================
+// INIT
+// ================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  addMarket('UK', 'uk');
+  addCreative();
+  renderStepper();
+  updateSimpleSourcesVisibility();
+  updateAudiencePlatVisibility();
+  setStep(1);
+  scheduleChecklistUpdate();
+});
+
+// ================================================================
+// ACCORDION / SECTION OPEN
+// ================================================================
+const SECTION_STEPS = {
+  'sec-details': 1,
+  'sec-type': 2,
+  'sec-paid': 3,
+  'sec-organic': 4,
+  'sec-checklist': 5
+};
+
+function openSection(id) {
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  // Check if already open before we close everything (toggle behaviour)
+  const alreadyOpen = target.classList.contains('card--open') || target.classList.contains('checklist-card--open');
+
+  // Close all cards
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('card--open'));
+  document.querySelectorAll('.checklist-card').forEach(c => c.classList.remove('checklist-card--open'));
+
+  if (alreadyOpen) return; // Second click — collapse and stop
+
+  if (target.classList.contains('checklist-card')) {
+    target.classList.add('checklist-card--open');
+  } else {
+    target.classList.add('card--open');
+  }
+
+  // Update stepper
+  const stepNum = SECTION_STEPS[id] || 1;
+  setStep(stepNum);
+
+  // Scroll into view
+  setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+
+function setStep(n) {
+  currentStep = n;
+  for (let i = 1; i <= 5; i++) {
+    const stepEl = document.getElementById(`stp-${i}`);
+    const circleEl = document.getElementById(`stp-circle-${i}`);
+    if (!stepEl) continue;
+    stepEl.classList.remove('active', 'done');
+    if (i === n) {
+      stepEl.classList.add('active');
+      circleEl.textContent = i;
+    } else if (i < n) {
+      stepEl.classList.add('done');
+      circleEl.textContent = '✓';
+    } else {
+      circleEl.textContent = i;
+    }
+    // Update lines
+    if (i < 5) {
+      const lineEl = document.getElementById(`stp-line-${i}`);
+      if (lineEl) lineEl.classList.toggle('done', i < n);
+    }
+  }
+}
+
+function openFirstActive() {
+  if (isPaid) openSection('sec-paid');
+  else if (isOrganic) openSection('sec-organic');
+  else openSection('sec-paid');
+}
+
+function openNextAfterPaid() {
+  if (isOrganic) openSection('sec-organic');
+  else openSection('sec-checklist');
+}
+
+// ================================================================
+// START OVER
+// ================================================================
+function startOver() {
+  if (!confirm('Clear all fields and start over?')) return;
+  isPaid = false; isOrganic = false;
+  markets = []; interests = []; campaignPartners = []; locales = [];
+  customPlatforms = []; renderCustomPlatforms();
+  creativeId = 0; pgSourceId = 0; pgGroupId = 0; localeId = 0;
+  paidPgGroupId = 0; paidPgSrcId = 0; ssrId = 0; marketGroupCounter = 0;
+  generatedData = { paid: [], organic: [] };
+
+  ['account','campaignName','campaignSlug','dates','landingPage','utmTerm','interestInput','partnerInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('mechanic').selectedIndex = 0;
+  document.getElementById('sport').selectedIndex = 0;
+  document.getElementById('partnership').selectedIndex = 0;
+  document.getElementById('prizes').selectedIndex = 0;
+  document.getElementById('channelType').selectedIndex = 0;
+  document.getElementById('landingPage').classList.add('req-field');
+
+  // Reset custom inputs
+  ['mechanic_custom','sport_custom','partnership_custom','channelType_custom'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.classList.add('hidden'); }
+  });
+
+  // Reset pills
+  [...document.querySelectorAll('.pill.on')].forEach(p => p.classList.remove('on'));
+  [...document.querySelectorAll('.pill input[type=checkbox]')].forEach(cb => cb.checked = false);
+  document.getElementById('dp-all')?.classList.add('on');
+  const dAll = document.getElementById('d-all');
+  if (dAll) dAll.checked = true;
+
+  // Reset type buttons and hide steps 3 & 4
+  document.getElementById('typePaid').classList.remove('on');
+  document.getElementById('typeOrganic').classList.remove('on');
+  document.getElementById('sec-paid').classList.add('hidden');
+  document.getElementById('sec-paid').classList.remove('card--open');
+  document.getElementById('sec-organic').classList.add('hidden');
+  document.getElementById('sec-organic').classList.remove('card--open');
+
+  // Clear containers
+  document.getElementById('mktList').innerHTML = '';
+  document.getElementById('interestWrap').querySelectorAll('.tag').forEach(t => t.remove());
+  renderPerAudiencePlatforms();
+  updateAudiencePlatVisibility();
+  document.getElementById('partnerWrap').querySelectorAll('.tag').forEach(t => t.remove());
+  document.getElementById('creativesBody').innerHTML = '';
+  document.getElementById('pgContainer').innerHTML = '';
+  document.getElementById('paidPgContainer').innerHTML = '';
+  document.getElementById('localeList').innerHTML = '';
+  document.getElementById('simpleSourcesBody').innerHTML = '';
+  document.getElementById('sec-preview').classList.add('hidden');
+  document.getElementById('genModal').classList.add('hidden');
+
+  // Reset confirmation
+  const cb = document.getElementById('paidTeamConfirmed');
+  if (cb) cb.checked = false;
+  document.getElementById('confirmWrap')?.classList.remove('confirmed');
+
+  // Re-seed defaults
+  slugLocked = false;
+  addMarket('UK', 'uk');
+  addCreative();
+  renderStepper();
+  updateSimpleSourcesVisibility();
+
+  // Open step 1, set stepper
+  openSection('sec-details');
+  scheduleChecklistUpdate();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ================================================================
+// PAID TEAM CONFIRMATION
+// ================================================================
+function onConfirmChange() {
+  const checked = document.getElementById('paidTeamConfirmed').checked;
+  document.getElementById('confirmWrap').classList.toggle('confirmed', checked);
+  scheduleChecklistUpdate();
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function slugify(s) {
+  return (s||'').toLowerCase().trim()
+    .replace(/[\/\\&]+/g,'_').replace(/\s+/g,'_')
+    .replace(/[^a-z0-9_-]/g,'').replace(/__+/g,'_').replace(/^_|_$/g,'');
+}
+function getV(id) { return (document.getElementById(id)?.value||'').trim(); }
+function getSel(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  if (el.value === 'custom') return slugify(getV(id+'_custom'));
+  return el.value;
+}
+function toggleCustom(id) {
+  const el = document.getElementById(id);
+  document.getElementById(id+'_custom')?.classList.toggle('hidden', el.value!=='custom');
+}
+function cartesian(...arrs) {
+  const f = arrs.filter(a=>a.length);
+  if (!f.length) return [[]];
+  return f.reduce((a,b) => a.flatMap(x => b.map(y=>[...x,y])), [[]]);
+}
+const FLAGS = {
+  // British Isles
+  uk:'🇬🇧',uk_ire:'🇬🇧',england:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',eng:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  scotland:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',sco:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',wales:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',wal:'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  ireland:'🇮🇪',irl:'🇮🇪',ire:'🇮🇪',
+  // Africa
+  za:'🇿🇦',south_africa:'🇿🇦',nam:'🇳🇦',namibia:'🇳🇦',ke:'🇰🇪',kenya:'🇰🇪',
+  // Americas
+  us:'🇺🇸',usa:'🇺🇸',ca:'🇨🇦',canada:'🇨🇦',br:'🇧🇷',brazil:'🇧🇷',
+  arg:'🇦🇷',argentina:'🇦🇷',
+  // Europe
+  fr:'🇫🇷',france:'🇫🇷',it:'🇮🇹',italy:'🇮🇹',de:'🇩🇪',germany:'🇩🇪',
+  es:'🇪🇸',spain:'🇪🇸',pt:'🇵🇹',portugal:'🇵🇹',
+  // Asia Pacific
+  au:'🇦🇺',aus:'🇦🇺',australia:'🇦🇺',nz:'🇳🇿',new_zealand:'🇳🇿',jp:'🇯🇵',japan:'🇯🇵',
+  sg:'🇸🇬',singapore:'🇸🇬',hk:'🇭🇰',indonesia:'🇮🇩',malaysia:'🇲🇾',
+  philippines:'🇵🇭',thailand:'🇹🇭',
+  // Middle East
+  sa:'🇸🇦',saudi_arabia:'🇸🇦',ksa:'🇸🇦',uae:'🇦🇪',gcc:'🌍',
+  // Other
+  global:'🌍',worldwide:'🌍',
+};
+function getFlag(slug) { return FLAGS[slug.toLowerCase()] || '🏴'; }
+
+// ================================================================
+// TYPE TOGGLE
+// ================================================================
+function toggleType(type) {
+  if (type==='paid') {
+    isPaid = !isPaid;
+    document.getElementById('typePaid').classList.toggle('on', isPaid);
+    const secPaid = document.getElementById('sec-paid');
+    secPaid.classList.toggle('hidden', !isPaid);
+    if (!isPaid) secPaid.classList.remove('card--open');
+    // If organic is active, re-sync locales (paid turned on or off)
+    if (isOrganic) {
+      if (!isPaid) locales = []; // Clear synced locales when paid is turned off
+      syncOrganicLocales();
+    }
+  } else {
+    isOrganic = !isOrganic;
+    document.getElementById('typeOrganic').classList.toggle('on', isOrganic);
+    const secOrganic = document.getElementById('sec-organic');
+    secOrganic.classList.toggle('hidden', !isOrganic);
+    if (!isOrganic) secOrganic.classList.remove('card--open');
+    if (isOrganic) syncOrganicPartners();
+    if (isOrganic) syncOrganicLocales();
+    if (!isOrganic) renderLocaleSyncUI(); // Reset UI when organic turned off
+  }
+  renderStepper();
+  scheduleChecklistUpdate();
+}
+function renderStepper() {
+  const stepDefs = [
+    { label: 'Campaign Details', id: 'sec-details' },
+    { label: 'Campaign Type',    id: 'sec-type' },
+  ];
+  if (isPaid)    stepDefs.push({ label: 'Paid Details',    id: 'sec-paid' });
+  if (isOrganic) stepDefs.push({ label: 'Organic Details', id: 'sec-organic' });
+  stepDefs.push({ label: 'Review & Generate', id: 'sec-checklist' });
+
+  // Rebuild section→step mapping
+  ['sec-details','sec-type','sec-paid','sec-organic','sec-checklist'].forEach(k => delete SECTION_STEPS[k]);
+  stepDefs.forEach((s, i) => { SECTION_STEPS[s.id] = i + 1; });
+
+  const stepper = document.getElementById('stepper');
+  stepper.innerHTML = stepDefs.map((s, i) => {
+    const num = i + 1;
+    const isLast = i === stepDefs.length - 1;
+    return `<div class="stepper-step" id="stp-${num}">
+      <div class="stepper-circle" id="stp-circle-${num}">${num}</div>
+      <span class="stepper-label">${s.label}</span>
+    </div>${!isLast ? `<div class="stepper-line" id="stp-line-${num}"></div>` : ''}`;
+  }).join('');
+
+  // Update the organic card's step badge
+  const organicBadge = document.getElementById('organicStep');
+  if (organicBadge) organicBadge.textContent = SECTION_STEPS['sec-organic'] || (isPaid ? 4 : 3);
+
+  // Re-apply stepper visual state
+  setStep(Math.min(currentStep, stepDefs.length));
+}
+
+// ================================================================
+// SLUG AUTO
+// ================================================================
+function autoSlug() {
+  if (slugLocked) return;
+  const acc = slugify(getV('account'));
+  const camp = slugify(getV('campaignName'));
+  let slug = '';
+  if (acc && camp) slug = acc + '_' + camp;
+  else slug = acc || camp;
+  document.getElementById('campaignSlug').value = slug;
+}
+
+// ================================================================
+// CAMPAIGN PARTNERS
+// ================================================================
+function partnerTagKeydown(e) {
+  if (e.key==='Enter'||e.key===',') {
+    e.preventDefault();
+    const inp = document.getElementById('partnerInput');
+    const v = inp.value.trim();
+    if (v) { addPartner(slugify(v), v); inp.value=''; }
+  }
+}
+function addPartner(slug, name) {
+  if (campaignPartners.find(p=>p.slug===slug)) return;
+  campaignPartners.push({slug, name});
+  renderPartners();
+  syncOrganicPartners();
+  scheduleChecklistUpdate();
+}
+function removePartner(i) {
+  campaignPartners.splice(i,1);
+  renderPartners();
+  syncOrganicPartners();
+  scheduleChecklistUpdate();
+}
+function renderPartners() {
+  const wrap = document.getElementById('partnerWrap');
+  const inp = document.getElementById('partnerInput');
+  wrap.querySelectorAll('.tag').forEach(t=>t.remove());
+  campaignPartners.forEach((p,i) => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${p.name} <span class="tag-x" onclick="removePartner(${i})">×</span>`;
+    wrap.insertBefore(tag, inp);
+  });
+}
+function syncOrganicPartners() {
+  if (!isOrganic) return;
+  const container = document.getElementById('pgContainer');
+  // Get existing groups
+  const existingGroups = [...container.querySelectorAll('.pg')];
+
+  // Find groups that are partner-linked (have a data-partner-slug attribute)
+  // We'll track partner groups by data attribute
+  // First pass: remove groups whose partner no longer exists
+  existingGroups.forEach(div => {
+    const pslug = div.dataset.partnerSlug;
+    if (pslug && !campaignPartners.find(p=>p.slug===pslug)) {
+      div.remove();
+    }
+  });
+
+  // Second pass: add groups for partners that don't have a group yet
+  campaignPartners.forEach(partner => {
+    const existing = container.querySelector(`.pg[data-partner-slug="${partner.slug}"]`);
+    if (!existing) {
+      addPartnerGroup(partner.name, true, partner.slug);
+    }
+  });
+
+  updateSimpleSourcesVisibility();
+}
+
+// ================================================================
+// MARKETS
+// ================================================================
+function addMarket(display, slug) {
+  markets.push({display, slug, url:'', groupId:null});
+  renderMarkets();
+  if (isOrganic) syncOrganicLocales();
+  scheduleChecklistUpdate();
+}
+function renderMarkets() {
+  const c = document.getElementById('mktList');
+  let html = '';
+  markets.forEach((m, i) => {
+    const linkedClass = m.groupId !== null ? ' mkt-card--linked' : '';
+    html += `<div class="mkt-card${linkedClass}" id="mkt-${i}">
+      <div class="mkt-flag">${getFlag(m.slug||'')}</div>
+      <div class="mkt-cell">
+        <label>Display</label>
+        <input type="text" placeholder="e.g. UK" value="${m.display}"
+          oninput="markets[${i}].display=this.value; updateMktFlag(${i})">
+      </div>
+      <div class="mkt-cell">
+        <label>Slug (utm_campaign)</label>
+        <input type="text" id="mkt-slug-${i}" class="mono" placeholder="e.g. uk_ire" value="${m.slug}"
+          oninput="markets[${i}].slug=this.value; updateMktFlag(${i}); scheduleChecklistUpdate()">
+      </div>
+      <div class="mkt-cell">
+        <label>URL Override</label>
+        <input type="url" placeholder="https://... (leave blank to use main URL)" value="${m.url}"
+          oninput="markets[${i}].url=this.value; if(isOrganic) syncOrganicLocales()">
+      </div>
+      <button class="btn-rm" onclick="removeMarket(${i})" title="Remove market">×</button>
+    </div>`;
+    // Connector button between adjacent markets
+    if (i < markets.length - 1) {
+      const bothLinked = m.groupId !== null && m.groupId === markets[i+1]?.groupId;
+      html += `<div class="mkt-connector">
+        <button class="btn-link${bothLinked ? ' linked' : ''}" onclick="toggleLink(${i}, ${i+1})" title="Link/unlink markets">🔗</button>
+      </div>`;
+    }
+  });
+  c.innerHTML = html;
+}
+function updateMktFlag(i) {
+  const card = document.getElementById(`mkt-${i}`);
+  const flag = card?.querySelector('.mkt-flag');
+  const slug = document.getElementById(`mkt-slug-${i}`)?.value || '';
+  if (flag) flag.textContent = getFlag(slug);
+}
+function removeMarket(i) { markets.splice(i,1); renderMarkets(); if(isOrganic) syncOrganicLocales(); scheduleChecklistUpdate(); }
+function toggleLink(i, j) {
+  if (markets[i].groupId !== null && markets[i].groupId === markets[j].groupId) {
+    // Unlink
+    markets[i].groupId = null;
+    markets[j].groupId = null;
+  } else {
+    // Link
+    const gid = ++marketGroupCounter;
+    markets[i].groupId = gid;
+    markets[j].groupId = gid;
+  }
+  renderMarkets();
+  scheduleChecklistUpdate();
+}
+
+// Group markets by groupId for generation
+function getEffectiveMarkets() {
+  const groups = [];
+  const seen = new Set();
+  markets.filter(m=>m.slug).forEach((m,i) => {
+    if (m.groupId !== null) {
+      if (!seen.has(m.groupId)) {
+        seen.add(m.groupId);
+        const members = markets.filter(x=>x.groupId===m.groupId && x.slug);
+        groups.push({
+          display: members.map(x=>x.display||x.slug).join(' / '),
+          slug: members.map(x=>x.slug).join('_'),
+          url: members.find(x=>x.url)?.url || '',
+          members
+        });
+      }
+    } else {
+      groups.push({display:m.display||m.slug, slug:m.slug, url:m.url||'', members:[m]});
+    }
+  });
+  return groups;
+}
+
+// ================================================================
+// INTEREST TAGS
+// ================================================================
+function tagKeydown(e) {
+  if (e.key==='Enter'||e.key===',') {
+    e.preventDefault();
+    const inp = document.getElementById('interestInput');
+    const v = inp.value.trim();
+    if (v) { addInterest(slugify(v), v); inp.value=''; }
+  }
+}
+function addInterest(slug, display) {
+  if (interests.find(t => t.slug === slug)) return;
+  // Copy currently selected global platforms as defaults for this audience
+  const defaultPlats = getChecked('p', PLATS).concat(customPlatforms.filter(p => p.active).map(p => p.slug));
+  interests.push({ slug, display, platforms: defaultPlats.length ? [...defaultPlats] : ['meta'] });
+  renderInterests();
+  renderPerAudiencePlatforms();
+  updateAudiencePlatVisibility();
+  scheduleChecklistUpdate();
+}
+function renderInterests() {
+  const wrap = document.getElementById('interestWrap');
+  const inp = document.getElementById('interestInput');
+  wrap.querySelectorAll('.tag').forEach(t => t.remove());
+  interests.forEach((t, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = `${t.display} <span class="tag-x" onclick="removeInterest(${i})">×</span>`;
+    wrap.insertBefore(tag, inp);
+  });
+}
+function removeInterest(i) {
+  interests.splice(i, 1);
+  renderInterests();
+  renderPerAudiencePlatforms();
+  updateAudiencePlatVisibility();
+  scheduleChecklistUpdate();
+}
+
+// ================================================================
+// PER-AUDIENCE PLATFORMS
+// ================================================================
+function toggleInterestPlatform(idx, plat) {
+  const interest = interests[idx];
+  if (!interest) return;
+  const pos = interest.platforms.indexOf(plat);
+  if (pos >= 0) interest.platforms.splice(pos, 1);
+  else interest.platforms.push(plat);
+  renderPerAudiencePlatforms();
+  scheduleChecklistUpdate();
+}
+
+const PLAT_LABELS = { meta:'Meta', facebook:'Facebook', instagram:'Instagram', x:'X', tiktok:'TikTok', google:'Google', linkedin:'LinkedIn', youtube:'YouTube' };
+
+function renderPerAudiencePlatforms() {
+  const el = document.getElementById('perAudiencePlatTable');
+  if (!el) return;
+  const allPlatKeys = [...PLATS, ...customPlatforms.map(p => p.slug)];
+  el.innerHTML = interests.map((interest, idx) => {
+    const pills = allPlatKeys.map(p => {
+      const on = interest.platforms.includes(p);
+      const label = PLAT_LABELS[p] || customPlatforms.find(cp => cp.slug === p)?.display || p;
+      return `<span class="pill${on ? ' on' : ''}" onclick="toggleInterestPlatform(${idx},'${p}')" style="font-size:11.5px;padding:4px 10px;">${label}</span>`;
+    }).join('');
+    const warn = !interest.platforms.length
+      ? '<span style="font-size:11px;color:var(--red);margin-left:6px">⚠ select at least one platform</span>' : '';
+    return `<div class="aud-plat-row">
+      <span class="aud-name">${interest.display}</span>
+      <div class="aud-plat-wrap">${pills}${warn}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateAudiencePlatVisibility() {
+  const hasInterests = interests.length > 0;
+  document.getElementById('globalPlatSection')?.classList.toggle('hidden', hasInterests);
+  document.getElementById('perAudiencePlatSection')?.classList.toggle('hidden', !hasInterests);
+}
+
+// ================================================================
+// PILLS
+// ================================================================
+// Custom platforms
+function addCustomPlatform() {
+  const input = document.getElementById('customPlatInput');
+  const raw = (input.value || '').trim();
+  if (!raw) return;
+  const slug = raw.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  if (!slug) return;
+  if (customPlatforms.some(p => p.slug === slug)) { input.value = ''; return; }
+  customPlatforms.push({ display: raw, slug, active: true });
+  renderCustomPlatforms();
+  input.value = '';
+  scheduleChecklistUpdate();
+}
+function toggleCustomPlatform(slug) {
+  const p = customPlatforms.find(p => p.slug === slug);
+  if (p) { p.active = !p.active; renderCustomPlatforms(); scheduleChecklistUpdate(); }
+}
+function removeCustomPlatform(slug, e) {
+  if (e) e.stopPropagation();
+  customPlatforms = customPlatforms.filter(p => p.slug !== slug);
+  renderCustomPlatforms();
+  scheduleChecklistUpdate();
+}
+function renderCustomPlatforms() {
+  const el = document.getElementById('customPlatPills');
+  if (!el) return;
+  el.innerHTML = customPlatforms.map(p => `
+    <label class="pill${p.active?' on':''}" onclick="toggleCustomPlatform('${p.slug}')">
+      ${p.display} <span onclick="removeCustomPlatform('${p.slug}',event)" style="margin-left:3px;opacity:.65;cursor:pointer;font-size:11px;">✕</span>
+    </label>`).join('');
+}
+
+function togglePill(prefix, val, e) {
+  if (e) e.preventDefault();
+  const pill = document.getElementById(`${prefix}p-${val}`);
+  const cb = document.getElementById(`${prefix}-${val}`);
+  const on = !pill.classList.contains('on');
+  pill.classList.toggle('on', on);
+  cb.checked = on;
+  scheduleChecklistUpdate();
+  if (prefix === 'd') checkDemoAutoSwitch();
+}
+const DEMOS = ['all','female','male'];
+const PLATS = ['meta','facebook','instagram','x','tiktok','google','linkedin','youtube'];
+function getChecked(prefix, vals) {
+  return vals.filter(v=>{ const cb=document.getElementById(`${prefix}-${v}`); return cb&&cb.checked; });
+}
+
+function checkDemoAutoSwitch() {
+  const maleOn = document.getElementById('d-male')?.checked;
+  const femaleOn = document.getElementById('d-female')?.checked;
+  const allOn = document.getElementById('d-all')?.checked;
+  if (maleOn && femaleOn && !allOn) {
+    // Deselect male and female, select all
+    ['male','female'].forEach(v => {
+      document.getElementById(`dp-${v}`)?.classList.remove('on');
+      const cb = document.getElementById(`d-${v}`);
+      if (cb) cb.checked = false;
+    });
+    document.getElementById('dp-all')?.classList.add('on');
+    const allCb = document.getElementById('d-all');
+    if (allCb) allCb.checked = true;
+    // Show message
+    const msg = document.getElementById('demoSwitchMsg');
+    if (msg) {
+      msg.style.display = 'block';
+      setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    }
+    scheduleChecklistUpdate();
+  }
+}
+
+// ================================================================
+// CREATIVES
+// ================================================================
+function addCreative() {
+  const id = ++creativeId;
+  const tbody = document.getElementById('creativesBody');
+  const tr = document.createElement('tr');
+  tr.id = `cr-${id}`;
+  tr.innerHTML = `
+    <td>
+      <select id="cta-${id}" style="width:100%" onchange="toggleCreativeField(${id},'cta'); scheduleChecklistUpdate()">
+        <option value="enter_now">Enter Now</option>
+        <option value="register">Register</option>
+        <option value="learn_more">Learn More</option>
+        <option value="discover_now">Discover Now</option>
+        <option value="find_out_more">Find Out More</option>
+        <option value="na">n/a</option>
+        <option value="custom">Custom...</option>
+      </select>
+      <input type="text" id="cta-c-${id}" class="mono hidden" placeholder="custom cta" style="margin-top:4px;width:100%" oninput="scheduleChecklistUpdate()">
+    </td>
+    <td><input type="text" id="cd-${id}" class="mono" style="width:100%" placeholder="e.g. player, blueticket, redcta" oninput="scheduleChecklistUpdate()"></td>
+    <td>
+      <select id="var-${id}" style="width:100%" onchange="toggleCreativeField(${id},'var'); scheduleChecklistUpdate()">
+        <option value="na">n/a</option>
+        <option value="a">A</option><option value="b">B</option><option value="c">C</option>
+        <option value="copy1">Copy 1</option><option value="copy2">Copy 2</option><option value="copy3">Copy 3</option>
+        <option value="custom">Custom...</option>
+      </select>
+      <input type="text" id="var-c-${id}" class="mono hidden" placeholder="custom variant" style="margin-top:4px;width:100%" oninput="scheduleChecklistUpdate()">
+    </td>
+    <td><button class="btn-rm" onclick="removeCreative(${id})">×</button></td>`;
+  tbody.appendChild(tr);
+  scheduleChecklistUpdate();
+}
+function toggleCreativeField(id, field) {
+  const sel = document.getElementById(`${field}-${id}`);
+  document.getElementById(`${field}-c-${id}`)?.classList.toggle('hidden', sel.value!=='custom');
+}
+function removeCreative(id) { document.getElementById(`cr-${id}`)?.remove(); scheduleChecklistUpdate(); }
+function getCreatives() {
+  const rows = document.getElementById('creativesBody').querySelectorAll('tr');
+  const out = [];
+  rows.forEach(tr => {
+    const id = tr.id.replace('cr-','');
+    const ctaSel = document.getElementById(`cta-${id}`);
+    const cta = ctaSel.value==='custom' ? slugify(getV(`cta-c-${id}`)) : ctaSel.value;
+    const cd = slugify(getV(`cd-${id}`)||'na');
+    const varSel = document.getElementById(`var-${id}`);
+    const variant = varSel.value==='custom' ? slugify(getV(`var-c-${id}`)) : varSel.value;
+    const displayCta = ctaSel.value==='custom' ? getV(`cta-c-${id}`) : ctaSel.options[ctaSel.selectedIndex].text;
+    const displayVariant = varSel.value==='na' ? '' : varSel.value==='custom' ? getV(`var-c-${id}`) : varSel.options[varSel.selectedIndex].text;
+    out.push({ cta, cd, variant, content:`${cta}-${cd}-${variant}`, display:[displayCta, getV(`cd-${id}`), displayVariant].filter(Boolean).join(', ') });
+  });
+  return out.length ? out : [{cta:'na',cd:'na',variant:'na',content:'na-na-na',display:'n/a'}];
+}
+
+// ================================================================
+// ORGANIC LOCALES
+// ================================================================
+const LOCALE_FLAG_MAP = {
+  english:'🇬🇧', arabic:'🇸🇦', spanish:'🇪🇸', french:'🇫🇷', german:'🇩🇪',
+  italian:'🇮🇹', portuguese:'🇵🇹', dutch:'🇳🇱', hindi:'🇮🇳', chinese:'🇨🇳',
+  japanese:'🇯🇵', korean:'🇰🇷', thai:'🇹🇭', malay:'🇲🇾', indonesian:'🇮🇩',
+  tagalog:'🇵🇭', swedish:'🇸🇪', norwegian:'🇳🇴', danish:'🇩🇰', polish:'🇵🇱',
+  russian:'🇷🇺', turkish:'🇹🇷', default:'🌐',
+};
+function inferLocaleFlag(name) {
+  const lower = (name||'').toLowerCase();
+  for (const [key, flag] of Object.entries(LOCALE_FLAG_MAP)) {
+    if (key !== 'default' && lower.includes(key)) return flag;
+  }
+  return '🌐';
+}
+function addLocale(display, url, flag) {
+  locales.push({display, url:url||'', flag: flag || inferLocaleFlag(display)});
+  renderLocales();
+  scheduleChecklistUpdate();
+}
+function renderLocales() {
+  const c = document.getElementById('localeList');
+  const synced = isPaid;
+  c.innerHTML = locales.map((l,i) => `
+    <div class="locale-card${synced?' locale-card--synced':''}">
+      <div class="locale-flag-cell"><span id="lf-${i}">${l.flag||'🌐'}</span></div>
+      <input type="text" placeholder="Market name" value="${l.display}" ${synced?'readonly style="opacity:.65;background:#f5f7f5;cursor:default"':
+        `oninput="locales[${i}].display=this.value; updateLocaleFlag(${i})"`}>
+      <input type="url" placeholder="URL for this market" value="${l.url}" ${synced?'readonly style="opacity:.65;background:#f5f7f5;cursor:default"':
+        `oninput="locales[${i}].url=this.value"`}>
+      ${synced ? '<div></div>' : `<button class="btn-rm" onclick="removeLocale(${i})">×</button>`}
+    </div>`).join('');
+}
+function syncOrganicLocales() {
+  if (isPaid) {
+    // Mirror paid markets → organic locales (names + URLs)
+    locales = markets.map(m => ({
+      display: m.display,
+      url: m.url || '',
+      flag: FLAGS[m.slug] || FLAGS[m.slug.toLowerCase()] || inferLocaleFlag(m.display)
+    }));
+  } else if (!locales.length) {
+    // Organic-only and no locales yet — leave empty for manual entry
+  }
+  renderLocales();
+  renderLocaleSyncUI();
+}
+function renderLocaleSyncUI() {
+  const banner  = document.getElementById('localeSyncBanner');
+  const manual  = document.getElementById('localeManualControls');
+  if (banner) banner.classList.toggle('hidden', !isPaid);
+  if (manual) manual.classList.toggle('hidden',  isPaid);
+}
+
+function updateLocaleFlag(i) {
+  const flag = inferLocaleFlag(locales[i].display);
+  locales[i].flag = flag;
+  const el = document.getElementById(`lf-${i}`);
+  if (el) el.textContent = flag;
+}
+function removeLocale(i) { locales.splice(i,1); renderLocales(); scheduleChecklistUpdate(); }
+function getOrganicURLs() {
+  const mainURL = getV('landingPage');
+  if (locales.length===0) return [{display:'Default', url:mainURL, flag:'🌐'}];
+  return locales.map(l=>({display:l.display||'Locale', url:l.url||mainURL, flag:l.flag||'🌐'}));
+}
+
+// ================================================================
+// SIMPLE SOURCES (organic default mode)
+// ================================================================
+function addSimpleSource(medium, source) {
+  const rid = ++ssrId;
+  const tbody = document.getElementById('simpleSourcesBody');
+  const tr = document.createElement('tr');
+  tr.id = `ssr-${rid}`;
+  tr.innerHTML = `
+    <td>
+      <select id="ssr-med-${rid}" style="width:100%" onchange="scheduleChecklistUpdate()">
+        <option value="organic_social"${medium==='organic_social'?' selected':''}>organic_social</option>
+        <option value="email"${medium==='email'?' selected':''}>email</option>
+        <option value="organic"${medium==='organic'?' selected':''}>organic</option>
+        <option value="website"${medium==='website'?' selected':''}>website</option>
+        <option value="app"${medium==='app'?' selected':''}>app</option>
+        <option value="copylink"${medium==='copylink'?' selected':''}>copylink</option>
+        <option value="qrcode"${medium==='qrcode'?' selected':''}>qrcode</option>
+      </select>
+    </td>
+    <td><input type="text" id="ssr-src-${rid}" class="mono" style="width:100%" value="${source}"
+      placeholder="e.g. instagram_story" oninput="scheduleChecklistUpdate()"></td>
+    <td><button class="btn-rm" onclick="document.getElementById('ssr-${rid}').remove(); scheduleChecklistUpdate()">×</button></td>`;
+  tbody.appendChild(tr);
+  scheduleChecklistUpdate();
+}
+function getSimpleSources() {
+  const sources = [];
+  document.getElementById('simpleSourcesBody').querySelectorAll('tr').forEach(tr => {
+    const rid = tr.id.replace('ssr-','');
+    const med = document.getElementById(`ssr-med-${rid}`)?.value || 'organic_social';
+    const src = getV(`ssr-src-${rid}`);
+    if (src) sources.push({medium: med, source: slugify(src)});
+  });
+  return sources;
+}
+function updateSimpleSourcesVisibility() {
+  const pgCount = document.getElementById('pgContainer').querySelectorAll('.pg').length;
+  const panel = document.getElementById('simpleSourcesPanel');
+  if (panel) panel.style.display = pgCount === 0 ? '' : 'none';
+}
+
+// ================================================================
+// PAID PARTNER GROUPS
+// ================================================================
+function addPaidPG(name, skipFocus) {
+  const id = ++paidPgGroupId;
+  const c = document.getElementById('paidPgContainer');
+  const div = document.createElement('div');
+  div.id = `ppg-${id}`;
+  div.className = 'pg';
+  div.innerHTML = `
+    <div class="pg-hdr">
+      <span class="pg-lbl">Partner / Account</span>
+      <input type="text" id="ppg-name-${id}" placeholder="e.g. Lions or Nations Championships" value="${name||''}"
+        oninput="onPaidPGNameChange(${id}); scheduleChecklistUpdate()">
+      <span class="pg-lbl">Slug:</span>
+      <input type="text" id="ppg-slug-${id}" class="mono" placeholder="auto" style="max-width:130px"
+        oninput="scheduleChecklistUpdate()">
+      <button class="btn-rm" onclick="removePaidPG(${id})" style="margin-left:auto">×</button>
+    </div>
+    <table class="src-tbl">
+      <thead><tr>
+        <th style="width:160px">Medium (utm_medium)</th>
+        <th>Source (utm_source) — edit freely</th>
+        <th style="width:32px"></th>
+      </tr></thead>
+      <tbody id="ppg-rows-${id}"></tbody>
+    </table>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center">
+      <span style="font-size:10.5px;color:var(--muted);font-weight:600;margin-right:3px">Quick add:</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_instagram')">Instagram</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_meta')">Meta</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_search','_google')">Google</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_tiktok')">TikTok</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_youtube')">YouTube</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_x')">X</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_linkedin')">LinkedIn</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'display','_display')">Display</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'programmatic','_programmatic')">Programmatic</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_pinterest')">Pinterest</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','_spotify')">Spotify</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'email','_email_inclusion')">Email Inclusion</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'website','_website')">Website</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'copylink','_copylink')">Copy Link</span>
+      <span class="qopt" onclick="addPaidPGRow(${id},'paid_social','')">+ Custom</span>
+    </div>`;
+  c.appendChild(div);
+  if (!skipFocus) setTimeout(()=>document.getElementById(`ppg-name-${id}`)?.focus(), 50);
+}
+function onPaidPGNameChange(id) {
+  const name = getV(`ppg-name-${id}`);
+  const slugEl = document.getElementById(`ppg-slug-${id}`);
+  if (!slugEl.dataset.edited) slugEl.value = slugify(name);
+}
+function addPaidPGRow(groupId, medium, suffix) {
+  const rid = ++paidPgSrcId;
+  const tbody = document.getElementById(`ppg-rows-${groupId}`);
+  const slug = getV(`ppg-slug-${groupId}`) || slugify(getV(`ppg-name-${groupId}`)) || '';
+  const source = slug + suffix;
+  const tr = document.createElement('tr');
+  tr.id = `ppgr-${rid}`;
+  tr.innerHTML = `
+    <td>
+      <select id="ppgr-med-${rid}" style="width:100%" onchange="scheduleChecklistUpdate()">
+        <option value="paid_social"${medium==='paid_social'?' selected':''}>paid_social</option>
+        <option value="paid_search"${medium==='paid_search'?' selected':''}>paid_search</option>
+        <option value="display"${medium==='display'?' selected':''}>display</option>
+        <option value="programmatic"${medium==='programmatic'?' selected':''}>programmatic</option>
+        <option value="ppc"${medium==='ppc'?' selected':''}>ppc</option>
+        <option value="email"${medium==='email'?' selected':''}>email</option>
+        <option value="website"${medium==='website'?' selected':''}>website</option>
+        <option value="copylink"${medium==='copylink'?' selected':''}>copylink</option>
+      </select>
+    </td>
+    <td><input type="text" id="ppgr-src-${rid}" class="mono" style="width:100%" value="${source}"
+      placeholder="e.g. lions_meta" oninput="scheduleChecklistUpdate()"></td>
+    <td><button class="btn-rm" onclick="document.getElementById('ppgr-${rid}').remove(); scheduleChecklistUpdate()">×</button></td>`;
+  tbody.appendChild(tr);
+  scheduleChecklistUpdate();
+}
+function removePaidPG(id) { document.getElementById(`ppg-${id}`)?.remove(); scheduleChecklistUpdate(); }
+function getPaidPartnerSources() {
+  const sources = [];
+  document.getElementById('paidPgContainer').querySelectorAll('.pg').forEach(div => {
+    const id = div.id.replace('ppg-','');
+    const name = getV(`ppg-name-${id}`);
+    div.querySelectorAll('tbody tr').forEach(tr => {
+      const rid = tr.id.replace('ppgr-','');
+      const med = document.getElementById(`ppgr-med-${rid}`)?.value || 'paid_social';
+      const src = getV(`ppgr-src-${rid}`);
+      if (src) sources.push({name, medium:med, source:slugify(src)});
+    });
+  });
+  return sources.length ? sources : null;
+}
+function getPaidSourceDimension() {
+  const partnerSources = getPaidPartnerSources();
+  if (partnerSources) return partnerSources;
+  const medium = getSel('channelType') || 'paid_social';
+  const predefined = getChecked('p', PLATS).map(p => ({name:'', medium, source:p}));
+  const custom = customPlatforms.filter(p => p.active).map(p => ({name:'', medium, source:p.slug}));
+  return [...predefined, ...custom];
+}
+// Returns sources for a specific interest (uses its own platform list if set, else falls back to global)
+function getInterestSources(interest) {
+  const medium = getSel('channelType') || 'paid_social';
+  if (interest.platforms && interest.platforms.length) {
+    return interest.platforms.map(p => ({ name: '', medium, source: p }));
+  }
+  // Fallback: global platform pills
+  const predefined = getChecked('p', PLATS).map(p => ({name:'', medium, source:p}));
+  const custom = customPlatforms.filter(p => p.active).map(p => ({name:'', medium, source:p.slug}));
+  return [...predefined, ...custom];
+}
+
+// ================================================================
+// ORGANIC PARTNER GROUPS
+// ================================================================
+function addPartnerGroup(name, skipFocus, partnerSlug) {
+  const id = ++pgGroupId;
+  const c = document.getElementById('pgContainer');
+  const div = document.createElement('div');
+  div.id = `pg-${id}`;
+  div.className = 'pg';
+  if (partnerSlug) div.dataset.partnerSlug = partnerSlug;
+  div.innerHTML = `
+    <div class="pg-hdr">
+      <span class="pg-lbl">Partner / Account</span>
+      <input type="text" id="pg-name-${id}" placeholder="e.g. Lions or Nations Championships" value="${name||''}"
+        oninput="onPGNameChange(${id}); scheduleChecklistUpdate()">
+      <span class="pg-lbl">Slug:</span>
+      <input type="text" id="pg-slug-${id}" class="mono" placeholder="auto" style="max-width:130px"
+        oninput="scheduleChecklistUpdate()">
+      <button class="btn-rm" onclick="removePG(${id})" style="margin-left:auto">×</button>
+    </div>
+    <table class="src-tbl">
+      <thead><tr>
+        <th style="width:160px">Medium (utm_medium)</th>
+        <th>Source (utm_source) — edit freely</th>
+        <th style="width:32px"></th>
+      </tr></thead>
+      <tbody id="pg-rows-${id}"></tbody>
+    </table>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center">
+      <span style="font-size:10.5px;color:var(--muted);font-weight:600;margin-right:3px">Quick add:</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_instagram')">Instagram</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_instagram_feed')">IG Feed</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_instagram_story')">IG Story</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_facebook')">Facebook</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_x')">X</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_linkedin')">LinkedIn</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_tiktok')">TikTok</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','_youtube')">YouTube</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_email')">Email</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_email_enter_now')">Email Enter Now</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_email_solus')">Email Solus</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_email_last_chance')">Email Last Chance</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_email_inclusion')">Email Inclusion</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic','_newsletter')">Newsletter</span>
+      <span class="qopt" onclick="addPGRow(${id},'website','_website_banner')">Website Banner</span>
+      <span class="qopt" onclick="addPGRow(${id},'website','_website_inclusion')">Website Inclusion</span>
+      <span class="qopt" onclick="addPGRow(${id},'website','_website')">Website</span>
+      <span class="qopt" onclick="addPGRow(${id},'app','_app')">App</span>
+      <span class="qopt" onclick="addPGRow(${id},'copylink','_copylink')">Copy Link</span>
+      <span class="qopt" onclick="addPGRow(${id},'organic_social','')">+ Custom</span>
+    </div>`;
+  c.appendChild(div);
+  if (!skipFocus) setTimeout(()=>document.getElementById(`pg-name-${id}`)?.focus(), 50);
+  updateSimpleSourcesVisibility();
+}
+function onPGNameChange(id) {
+  const name = getV(`pg-name-${id}`);
+  const slugEl = document.getElementById(`pg-slug-${id}`);
+  if (!slugEl.dataset.edited) slugEl.value = slugify(name);
+}
+function addPGRow(groupId, medium, suffix) {
+  const rid = ++pgSourceId;
+  const tbody = document.getElementById(`pg-rows-${groupId}`);
+  const slug = getV(`pg-slug-${groupId}`) || slugify(getV(`pg-name-${groupId}`)) || '';
+  const source = slug + suffix;
+  const tr = document.createElement('tr');
+  tr.id = `pgr-${rid}`;
+  tr.innerHTML = `
+    <td>
+      <select id="pgr-med-${rid}" style="width:100%" onchange="scheduleChecklistUpdate()">
+        <option value="organic_social"${medium==='organic_social'?' selected':''}>organic_social</option>
+        <option value="email"${medium==='email'?' selected':''}>email</option>
+        <option value="organic"${medium==='organic'?' selected':''}>organic</option>
+        <option value="website"${medium==='website'?' selected':''}>website</option>
+        <option value="app"${medium==='app'?' selected':''}>app</option>
+        <option value="copylink"${medium==='copylink'?' selected':''}>copylink</option>
+        <option value="qrcode">qrcode</option>
+      </select>
+    </td>
+    <td><input type="text" id="pgr-src-${rid}" class="mono" style="width:100%" value="${source}"
+      placeholder="e.g. lions_instagram_story" oninput="scheduleChecklistUpdate()"></td>
+    <td><button class="btn-rm" onclick="document.getElementById('pgr-${rid}').remove(); scheduleChecklistUpdate()">×</button></td>`;
+  tbody.appendChild(tr);
+  scheduleChecklistUpdate();
+}
+function removePG(id) {
+  document.getElementById(`pg-${id}`)?.remove();
+  updateSimpleSourcesVisibility();
+  scheduleChecklistUpdate();
+}
+function getPartnerGroups() {
+  const groups = [];
+  document.getElementById('pgContainer').querySelectorAll('.pg').forEach(div => {
+    const id = div.id.replace('pg-','');
+    const name = getV(`pg-name-${id}`);
+    const slug = getV(`pg-slug-${id}`) || slugify(name) || `partner${id}`;
+    const sources = [];
+    div.querySelectorAll('tbody tr').forEach(tr => {
+      const rid = tr.id.replace('pgr-','');
+      const med = document.getElementById(`pgr-med-${rid}`)?.value || 'organic_social';
+      const src = getV(`pgr-src-${rid}`);
+      if (src) sources.push({medium:med, source:slugify(src)});
+    });
+    if (sources.length) groups.push({name, slug, sources});
+  });
+  return groups;
+}
+
+// ================================================================
+// LIVE CHECKLIST
+// ================================================================
+function scheduleChecklistUpdate() {
+  clearTimeout(checklistTimer);
+  checklistTimer = setTimeout(updateChecklist, 200);
+}
+function hasSpaces(str) { return /\s/.test(str); }
+function hasUppercase(str) { return str !== str.toLowerCase(); }
+function hasInvalidUtmChars(str) { return /[^a-z0-9_\-\.]/.test(str); }
+function isValidUrl(str) {
+  if (!str) return false;
+  try { const u = new URL(str); return u.protocol === 'https:' || u.protocol === 'http:'; }
+  catch { return false; }
+}
+function srcDisplay(source, pgSlug) {
+  let s = source;
+  if (pgSlug && s.toLowerCase().startsWith(pgSlug.toLowerCase() + '_')) s = s.slice(pgSlug.length + 1);
+  return s.replace(/_/g, ' ');
+}
+function dot(label) { return `<span class="sep">·</span>${label}`; }
+
+function updateChecklist() {
+  const account  = getV('account') || 'Account';
+  const slug     = getV('campaignSlug') || '(slug)';
+  const landing  = getV('landingPage');
+
+  let html = '';
+  let totalUTMs = 0;
+
+  // PAID
+  if (isPaid) {
+    const effectiveMarkets = getEffectiveMarkets();
+    const globalDefaultPlats = getChecked('p', PLATS).concat(customPlatforms.filter(p=>p.active).map(p=>p.slug));
+    const activeInterests  = interests.length ? interests : [{slug:'broad', display:'Broad', platforms: globalDefaultPlats.length ? globalDefaultPlats : ['meta']}];
+    const activeDemos      = getChecked('d', DEMOS);
+    const partnerSrcsForCL = getPaidPartnerSources();
+    const creatives        = getCreatives();
+    const confirmed        = document.getElementById('paidTeamConfirmed')?.checked;
+
+    const hasAnySources = partnerSrcsForCL || activeInterests.some(i => i.platforms && i.platforms.length > 0) || globalDefaultPlats.length > 0;
+
+    const globalErrs = [];
+    if (!effectiveMarkets.length) globalErrs.push('No markets added');
+    if (!activeDemos.length)      globalErrs.push('No demographics selected');
+    if (!hasAnySources)           globalErrs.push('No platforms / partner sources selected');
+    if (!isValidUrl(landing))     globalErrs.push('Landing page URL missing or invalid');
+    if (hasSpaces(slug) || hasUppercase(slug)) globalErrs.push('Campaign slug has spaces or uppercase letters');
+    if (!confirmed)               globalErrs.push('⚑ Paid team (Sophia & Fabio) not yet confirmed');
+
+    let rowsHtml = '';
+    let rowCount = 0;
+
+    if (effectiveMarkets.length && activeDemos.length) {
+      effectiveMarkets.forEach(mkt => {
+        activeInterests.forEach(interest => {
+          const iSrcs = partnerSrcsForCL || getInterestSources(interest);
+          if (!iSrcs.length) {
+            rowsHtml += `<div class="cl-utm-row cl-err">
+              <span class="cl-row-num">—</span>
+              <span class="cl-row-content"><strong>${account}</strong>${dot(interest.display||interest.slug)}${dot(mkt.display||mkt.slug)}</span>
+              <span class="cl-warn-badge">⚠ no platform selected for this audience</span>
+            </div>`;
+            return;
+          }
+          activeDemos.forEach(demo => {
+            iSrcs.forEach(src => {
+              creatives.forEach(creative => {
+                rowCount++;
+                const rowErrors = [];
+                const rowUrl = mkt.url || landing;
+                if (!isValidUrl(rowUrl)) rowErrors.push('URL missing or invalid');
+                if (mkt.slug && (hasSpaces(mkt.slug) || hasInvalidUtmChars(mkt.slug))) rowErrors.push('market slug has invalid characters');
+                if (src.source && (hasSpaces(src.source) || hasUppercase(src.source))) rowErrors.push('source should be lowercase with underscores');
+
+                const creativeLabel = creative.display && creative.display !== 'n/a'
+                  ? creative.display : (creative.cd && creative.cd !== 'na' ? creative.cd : creative.cta);
+                const srcLabel = src.name ? `${src.name}, ${src.source}` : src.source;
+                const utmTerm = slugify(getV('utmTerm') || 'na');
+
+                const parts = [
+                  `<strong>${account}</strong>`,
+                  dot('paid media'),
+                  dot(srcLabel),
+                  dot(interest.display || interest.slug),
+                  dot(demo),
+                  dot(`${mkt.display || mkt.slug}`),
+                  dot(creativeLabel || 'no creative detail'),
+                  dot(`term: ${utmTerm}`)
+                ].join('');
+
+                const errHtml = rowErrors.length
+                  ? `<span class="cl-warn-badge" title="${rowErrors.join('; ')}">⚠ ${rowErrors.join(' · ')}</span>` : '';
+
+                rowsHtml += `<div class="cl-utm-row${rowErrors.length ? ' cl-err' : ''}">
+                  <span class="cl-row-num">${rowCount}</span>
+                  <span class="cl-row-content">${parts}</span>
+                  ${errHtml}
+                </div>`;
+              });
+            });
+          });
+        });
+      });
+    }
+
+    totalUTMs += rowCount;
+
+    const errBlockHtml = globalErrs.map((e) => {
+      const isWarn = e.startsWith('⚑');
+      return `<div class="cl-alert" style="${isWarn?'background:#fffbf0;border-color:#f0d080;color:#7a5c00':''}">
+        ${isWarn ? '⚑' : '⚠'} ${isWarn ? e.slice(2) : e}
+      </div>`;
+    }).join('');
+
+    const formula = rowCount
+      ? `<div class="cl-formula"><strong>${rowCount} paid UTM rows</strong> — ${effectiveMarkets.length} market${effectiveMarkets.length!==1?'s':''} × ${activeInterests.length} audience${activeInterests.length!==1?'s':''} × ${activeDemos.length} demo${activeDemos.length!==1?'s':''} × ${creatives.length} creative${creatives.length!==1?'s':''}</div>`
+      : '';
+
+    html += `<div class="cl-section">
+      <div class="cl-section-hdr"><h3>📣 Paid UTMs</h3><span class="cl-count">${rowCount}</span></div>
+      ${errBlockHtml ? `<div class="cl-global-errors">${errBlockHtml}</div>` : ''}
+      ${rowsHtml ? `<div class="cl-utm-list">${rowsHtml}</div>` : ''}
+      ${formula}
+    </div>`;
+  }
+
+  // ORGANIC
+  if (isOrganic) {
+    const partnerGroups = getPartnerGroups();
+    const simpleMode = partnerGroups.length === 0;
+    const organicURLs = getOrganicURLs();
+
+    const globalErrs = [];
+    if (!isValidUrl(landing)) globalErrs.push('Landing page URL missing or invalid');
+
+    let rowsHtml = '';
+    let rowCount = 0;
+
+    if (simpleMode) {
+      const simpleSrcs = getSimpleSources();
+      if (!simpleSrcs.length) globalErrs.push('No sources added');
+      simpleSrcs.forEach(src => {
+        organicURLs.forEach(loc => {
+          rowCount++;
+          const rowErrors = [];
+          const rowUrl = loc.url || landing;
+          if (!isValidUrl(rowUrl)) rowErrors.push('URL missing or invalid');
+          if (!src.source) rowErrors.push('source is empty');
+          else if (hasSpaces(src.source) || hasUppercase(src.source)) rowErrors.push('source should be lowercase with underscores');
+
+          const localeLabel = organicURLs.length > 1 ? dot(`${loc.flag||'🌐'} ${loc.display}`) : '';
+          const errHtml = rowErrors.length
+            ? `<span class="cl-warn-badge" title="${rowErrors.join('; ')}">⚠ ${rowErrors.join(' · ')}</span>` : '';
+
+          rowsHtml += `<div class="cl-utm-row${rowErrors.length ? ' cl-err' : ''}">
+            <span class="cl-row-num">${rowCount}</span>
+            <span class="cl-row-content"><strong>${src.source||'(empty)'}</strong>${dot(src.medium)}${localeLabel}</span>
+            ${errHtml}
+          </div>`;
+        });
+      });
+    } else {
+      if (!partnerGroups.length) globalErrs.push('No partners / sources added');
+      partnerGroups.forEach(g => {
+        g.sources.forEach(src => {
+          organicURLs.forEach(loc => {
+            rowCount++;
+            const rowErrors = [];
+            const rowUrl = loc.url || landing;
+            if (!isValidUrl(rowUrl)) rowErrors.push('URL missing or invalid');
+            if (!src.source) rowErrors.push('source is empty');
+            else {
+              if (hasSpaces(src.source)) rowErrors.push('source has spaces');
+              if (hasUppercase(src.source)) rowErrors.push('source should be lowercase');
+              if (hasInvalidUtmChars(src.source)) rowErrors.push('source has special characters');
+            }
+
+            const pgSlug = g.slug || slugify(g.name) || '';
+            const srcLabel = src.source ? srcDisplay(src.source, pgSlug) : '(empty source)';
+            const localeLabel = organicURLs.length > 1 ? dot(`${loc.flag||'🌐'} ${loc.display}`) : '';
+            const errHtml = rowErrors.length
+              ? `<span class="cl-warn-badge" title="${rowErrors.join('; ')}">⚠ ${rowErrors.join(' · ')}</span>` : '';
+
+            rowsHtml += `<div class="cl-utm-row${rowErrors.length ? ' cl-err' : ''}">
+              <span class="cl-row-num">${rowCount}</span>
+              <span class="cl-row-content"><strong>${g.name || g.slug}</strong><span class="sep">,</span> ${srcLabel}${localeLabel}</span>
+              ${errHtml}
+            </div>`;
+          });
+        });
+      });
+    }
+
+    totalUTMs += rowCount;
+
+    const errBlockHtml = globalErrs.map(e => `<div class="cl-alert">⚠ ${e}</div>`).join('');
+
+    let formula = '';
+    if (simpleMode) {
+      const ss = getSimpleSources().length;
+      formula = ss ? `<div class="cl-formula">${ss} source${ss!==1?'s':''} × ${organicURLs.length} locale${organicURLs.length!==1?'s':''} = <strong>${rowCount} organic UTM rows</strong></div>` : '';
+    } else {
+      const totalSources = partnerGroups.reduce((n,g) => n + g.sources.length, 0);
+      formula = partnerGroups.length
+        ? `<div class="cl-formula">${totalSources} source${totalSources!==1?'s':''} × ${organicURLs.length} locale${organicURLs.length!==1?'s':''} = <strong>${rowCount} organic UTM rows</strong></div>` : '';
+    }
+
+    html += `<div class="cl-section">
+      <div class="cl-section-hdr"><h3>🌱 Organic UTMs</h3><span class="cl-count">${rowCount}</span></div>
+      ${errBlockHtml ? `<div class="cl-global-errors">${errBlockHtml}</div>` : ''}
+      ${rowsHtml ? `<div class="cl-utm-list">${rowsHtml}</div>` : ''}
+      ${formula}
+    </div>`;
+  }
+
+  if (!isPaid && !isOrganic) {
+    html = '<p class="cl-empty">Select Paid, Organic, or both in Step 2.</p>';
+  }
+
+  document.getElementById('checklistBody').innerHTML = html;
+  const label = totalUTMs === 1 ? '1 UTM' : `${totalUTMs} UTMs`;
+  document.getElementById('hdrCount').textContent = label;
+}
+
+// ================================================================
+// GENERATE
+// ================================================================
+function generate() {
+  const account      = getV('account');
+  const campaignName = getV('campaignName');
+  const slug         = getV('campaignSlug') || slugify(campaignName);
+  const mechanic     = getSel('mechanic');
+  const sport        = getSel('sport');
+  const partnership  = getSel('partnership');
+  const prizes       = getV('prizes');
+  const dates        = slugify(getV('dates')||'na');
+  const landingPage  = getV('landingPage');
+
+  if (!landingPage) { alert('Please enter the main Landing Page URL — this is required.'); document.getElementById('landingPage').focus(); return; }
+
+  generatedData = {paid:[], organic:[]};
+
+  // PAID
+  if (isPaid) {
+    const effectiveMarkets = getEffectiveMarkets();
+    if (!effectiveMarkets.length) { alert('Please add at least one market.'); return; }
+    const globalDefaultPlats = getChecked('p', PLATS).concat(customPlatforms.filter(p=>p.active).map(p=>p.slug));
+    const activeInterests = interests.length ? interests : [{slug:'broad',display:'Broad',platforms:globalDefaultPlats.length?globalDefaultPlats:['meta']}];
+    const activeDemos = getChecked('d', DEMOS);
+    if (!activeDemos.length) { alert('Please select at least one demographic.'); return; }
+    const partnerSrcs = getPaidPartnerSources();
+    const anyPlatforms = partnerSrcs || activeInterests.some(i => i.platforms && i.platforms.length > 0) || globalDefaultPlats.length > 0;
+    if (!anyPlatforms) { alert('Please select at least one platform (or add paid partner sources).'); return; }
+    if (!document.getElementById('paidTeamConfirmed')?.checked) {
+      if (!confirm('Have you confirmed creative requirements with the paid team (Sophia & Fabio)? Click OK to continue anyway.')) return;
+    }
+    const term      = slugify(getV('utmTerm')||'na');
+    const creatives = getCreatives();
+
+    effectiveMarkets.forEach(mkt => {
+      activeInterests.forEach(interest => {
+        const srcs = partnerSrcs || getInterestSources(interest);
+        activeDemos.forEach(demo => {
+          srcs.forEach(src => {
+            creatives.forEach(creative => {
+              const campaignParam = [slug,mechanic,sport,partnership,prizes,dates,mkt.slug,interest.slug,demo].join('-');
+              const url = mkt.url || landingPage;
+              generatedData.paid.push({
+                account, campaignName, dates, landingPage:url,
+                market:mkt.display, channelTargeting:interest.display, audienceTargeting:demo,
+                creativeVariations:creative.display,
+                slug, mechanic, sport, partnership, prizes,
+                marketSlug:mkt.slug, interestSlug:interest.slug, demo,
+                medium:src.medium, platform:src.source,
+                cta:creative.cta, cd:creative.cd, variant:creative.variant, term,
+                campaignParam, contentParam:creative.content,
+                finalUrl:`${url}?utm_campaign=${campaignParam}&utm_medium=${src.medium}&utm_source=${src.source}&utm_content=${creative.content}&utm_term=${term}`
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  // ORGANIC
+  if (isOrganic) {
+    const partnerGroups = getPartnerGroups();
+    const simpleMode = partnerGroups.length === 0;
+    const organicURLs = getOrganicURLs();
+    const campaignParam = [slug,mechanic,sport,partnership,prizes,dates].join('-');
+
+    if (simpleMode) {
+      const simpleSrcs = getSimpleSources();
+      if (!simpleSrcs.length) { alert('Please add at least one source in Simple Sources.'); return; }
+      simpleSrcs.forEach(src => {
+        organicURLs.forEach(loc => {
+          const url = loc.url || landingPage;
+          generatedData.organic.push({
+            campaignName, dates, landingPage:url, locale:loc.display,
+            partnerName:'',
+            slug, mechanic, sport, partnership, prizes,
+            medium:src.medium, source:src.source,
+            campaignParam,
+            finalUrl:`${url}?utm_campaign=${campaignParam}&utm_medium=${src.medium}&utm_source=${src.source}`
+          });
+        });
+      });
+    } else {
+      partnerGroups.forEach(g => {
+        g.sources.forEach(src => {
+          organicURLs.forEach(loc => {
+            const url = loc.url || landingPage;
+            generatedData.organic.push({
+              campaignName, dates, landingPage:url, locale:loc.display,
+              partnerName:g.name,
+              slug, mechanic, sport, partnership, prizes,
+              medium:src.medium, source:src.source,
+              campaignParam,
+              finalUrl:`${url}?utm_campaign=${campaignParam}&utm_medium=${src.medium}&utm_source=${src.source}`
+            });
+          });
+        });
+      });
+    }
+  }
+
+  if (!generatedData.paid.length && !generatedData.organic.length) { alert('No UTMs generated — please check your inputs.'); return; }
+
+  // Show confirmation modal
+  const total = generatedData.paid.length + generatedData.organic.length;
+  document.getElementById('modalBodyText').textContent = `You have generated ${total} UTM${total!==1?'s':''}. Review every link carefully before downloading — errors in UTM parameters cannot be easily fixed after a campaign goes live.`;
+  showGenModal();
+}
+
+// ================================================================
+// MODAL
+// ================================================================
+function showGenModal() { document.getElementById('genModal').classList.remove('hidden'); }
+function closeGenModal() { document.getElementById('genModal').classList.add('hidden'); }
+function confirmGenModal() { closeGenModal(); renderPreview(); }
+
+// ================================================================
+// PREVIEW
+// ================================================================
+function renderPreview() {
+  const sec = document.getElementById('sec-preview');
+  sec.classList.remove('hidden');
+  sec.scrollIntoView({behavior:'smooth',block:'start'});
+  const total = generatedData.paid.length + generatedData.organic.length;
+  document.getElementById('genInfo').textContent = `${total} UTM${total!==1?'s':''} generated`;
+
+  const tabs = document.getElementById('prevTabs');
+  const content = document.getElementById('prevContent');
+  tabs.innerHTML = ''; content.innerHTML = '';
+
+  function makeTab(label, panelId, active) {
+    const t = document.createElement('div');
+    t.className = 'ptab'+(active?' on':'');
+    t.innerHTML = label;
+    t.onclick = () => {
+      tabs.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      content.querySelectorAll('[data-panel]').forEach(p=>p.classList.add('hidden'));
+      content.querySelector(`[data-panel="${panelId}"]`)?.classList.remove('hidden');
+    };
+    tabs.appendChild(t);
+  }
+
+  if (generatedData.paid.length) {
+    makeTab(`Paid <span class="pcount">${generatedData.paid.length}</span>`, 'paid', true);
+    const panel = document.createElement('div');
+    panel.setAttribute('data-panel','paid');
+    panel.innerHTML = `<div class="prev-wrap"><table class="prev-tbl">
+      <thead><tr><th>#</th><th>Market</th><th>Audience</th><th>Demo</th><th>Platform</th><th>utm_campaign</th><th>utm_content</th><th>utm_term</th><th>Final URL</th></tr></thead>
+      <tbody>${generatedData.paid.map((r,i)=>`<tr>
+        <td>${i+1}</td><td>${r.market}</td><td>${r.channelTargeting}</td><td>${r.audienceTargeting}</td><td>${r.platform}</td>
+        <td class="mc">${r.campaignParam}</td><td class="mc">${r.contentParam}</td><td class="mc">${r.term}</td>
+        <td class="url-cell" title="${r.finalUrl}">${r.finalUrl.length>65?r.finalUrl.slice(0,65)+'…':r.finalUrl}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+    content.appendChild(panel);
+  }
+
+  if (generatedData.organic.length) {
+    const first = !generatedData.paid.length;
+    makeTab(`Organic <span class="pcount">${generatedData.organic.length}</span>`, 'organic', first);
+    const panel = document.createElement('div');
+    panel.setAttribute('data-panel','organic');
+    if (!first) panel.classList.add('hidden');
+    panel.innerHTML = `<div class="prev-wrap"><table class="prev-tbl">
+      <thead><tr><th>#</th><th>Partner</th><th>Locale</th><th>utm_medium</th><th>utm_source</th><th>utm_campaign</th><th>Final URL</th></tr></thead>
+      <tbody>${generatedData.organic.map((r,i)=>`<tr>
+        <td>${i+1}</td><td>${r.partnerName}</td><td>${r.locale}</td><td>${r.medium}</td><td>${r.source}</td>
+        <td class="mc">${r.campaignParam}</td>
+        <td class="url-cell" title="${r.finalUrl}">${r.finalUrl.length>75?r.finalUrl.slice(0,75)+'…':r.finalUrl}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+    content.appendChild(panel);
+  }
+}
+
+// ================================================================
+// MASTER SHEET URL — paste your Apps Script web app URL here after deployment
+// ================================================================
+const MASTER_SHEET_URL = 'https://script.google.com/a/macros/the.team/s/AKfycbwQzQup9CHqUKTHqwg39q_jfQoVj82t08j0Korb0SUqZ5DTZsOg2LBbTS4F8nBj6CG_Ig/exec';
+
+// ================================================================
+// HELPERS
+// ================================================================
+function toDisplay(slug) {
+  if (!slug) return '';
+  return slug.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function todayStr() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+// ================================================================
+// CLIENT EXPORT — clean format for sharing with clients / partners
+// Columns: Account | Campaign Details | Launch Dates | Landing Page | Channel | UTM URL
+// ================================================================
+function downloadExcelClient() {
+  if (!generatedData.paid.length && !generatedData.organic.length) { alert('No UTMs to export — generate first.'); return; }
+  const wb       = XLSX.utils.book_new();
+  const account  = getV('account') || '';
+  const campSlug = (getV('campaignName')||'Campaign').replace(/\s+/g,'_');
+  const dates    = getV('dates') || 'date';
+  const filename = `${(account||'Client').replace(/\s+/g,'_')}_${campSlug}_UTMs_${dates}_Client.xlsx`;
+
+  if (generatedData.paid.length) {
+    const headers = ['Account','Campaign Details','Launch Dates','Landing Page','Channel','UTM URL'];
+    const rows = generatedData.paid.map(r => {
+      const channel = `${toDisplay(r.medium)} — ${toDisplay(r.platform)}`;
+      return [account, r.campaignName, dates, r.landingPage, channel, r.finalUrl];
+    });
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{wch:24},{wch:34},{wch:14},{wch:52},{wch:28},{wch:120}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Paid UTMs');
+  }
+
+  if (generatedData.organic.length) {
+    const headers = ['Account / Partner','Campaign Details','Launch Dates','Landing Page','Channel','UTM URL'];
+    const rows = generatedData.organic.map(r => {
+      const partner = r.partnerName || account;
+      const channel = r.partnerName ? `${r.partnerName} — ${toDisplay(r.source)}` : toDisplay(r.source);
+      return [partner, r.campaignName, dates, r.landingPage, channel, r.finalUrl];
+    });
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{wch:24},{wch:34},{wch:14},{wch:52},{wch:32},{wch:120}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Organic UTMs');
+  }
+
+  XLSX.writeFile(wb, filename);
+}
+
+// ================================================================
+// INTERNAL EXPORT — full breakdown matching master sheet columns
+// ================================================================
+function downloadExcelInternal() {
+  if (!generatedData.paid.length && !generatedData.organic.length) { alert('No UTMs to export — generate first.'); return; }
+  const wb      = XLSX.utils.book_new();
+  const account = getV('account') || '';
+  const dates   = getV('dates') || '';
+  const today   = todayStr();
+  const campSlug = (getV('campaignName')||'Campaign').replace(/\s+/g,'_');
+  const filename = `${(account||'Client').replace(/\s+/g,'_')}_${campSlug}_UTMs_${dates}_Internal.xlsx`;
+
+  if (generatedData.paid.length) {
+    // Matches master sheet Paid tab columns (col 16 = intentional gap)
+    const headers = ['Date Generated','Account','Campaign Name','Campaign Slug','Launch Dates','Landing Page','Market','utm_medium','utm_source','Audience Interest','Audience Demographic','CTA','Creative Detail','Test Variant','utm_term','','utm_campaign','utm_content','Final UTM Link'];
+    const rows = generatedData.paid.map(r => [
+      today, account, r.campaignName, r.slug, dates, r.landingPage,
+      r.market, r.medium, r.platform,
+      r.interestSlug, r.demo, r.cta, r.cd, r.variant, r.term,
+      '', r.campaignParam, r.contentParam, r.finalUrl
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{wch:14},{wch:24},{wch:28},{wch:28},{wch:14},{wch:52},{wch:14},{wch:14},{wch:16},{wch:18},{wch:16},{wch:12},{wch:16},{wch:12},{wch:12},{wch:2},{wch:80},{wch:28},{wch:120}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Paid UTMs');
+  }
+
+  if (generatedData.organic.length) {
+    // Matches master sheet Organic tab columns (col 10 = intentional gap)
+    const headers = ['Date Generated','Account / Partner','Campaign Name','Campaign Slug','Launch Dates','Landing Page','utm_medium','utm_source','utm_term','','utm_campaign','Final UTM Link'];
+    const rows = generatedData.organic.map(r => [
+      today, r.partnerName || account, r.campaignName, r.slug, dates, r.landingPage,
+      r.medium, r.source, 'na',
+      '', r.campaignParam, r.finalUrl
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [{wch:14},{wch:24},{wch:28},{wch:28},{wch:14},{wch:52},{wch:14},{wch:22},{wch:8},{wch:2},{wch:80},{wch:120}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Organic UTMs');
+  }
+
+  XLSX.writeFile(wb, filename);
+}
+
+// ================================================================
+// PUSH TO MASTER SHEET
+// ================================================================
+function pushToMasterSheet() {
+  if (!generatedData.paid.length && !generatedData.organic.length) {
+    alert('No UTMs to push — generate first.'); return;
+  }
+  if (MASTER_SHEET_URL === 'PASTE_YOUR_WEBAPP_URL_HERE') {
+    alert('Master sheet not connected yet.\n\nPaste your Apps Script web app URL into the MASTER_SHEET_URL constant near the top of the script in utm-generator.html.'); return;
+  }
+
+  const account = getV('account') || '';
+  const dates   = getV('dates') || '';
+  const today   = todayStr();
+
+  const paidRows = generatedData.paid.map(r => ({
+    account,
+    campaignName:   r.campaignName,
+    campaignSlug:   r.slug,
+    dates,
+    landingPage:    r.landingPage,
+    market:         r.market,
+    medium:         r.medium,
+    source:         r.platform,
+    interest:       r.interestSlug,
+    demographic:    r.demo,
+    cta:            r.cta,
+    creativeDetail: r.cd,
+    variant:        r.variant,
+    term:           r.term,
+    campaign:       r.campaignParam,
+    content:        r.contentParam,
+    url:            r.finalUrl
+  }));
+
+  const organicRows = generatedData.organic.map(r => ({
+    accountPartner: r.partnerName || account,
+    campaignName:   r.campaignName,
+    campaignSlug:   r.slug,
+    dates,
+    landingPage:    r.landingPage,
+    medium:         r.medium,
+    source:         r.source,
+    term:           'na',
+    campaign:       r.campaignParam,
+    url:            r.finalUrl
+  }));
+
+  const btn = document.getElementById('pushBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Pushing…'; }
+
+  fetch(MASTER_SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ paid: paidRows, organic: organicRows })
+  })
+  .then(() => {
+    if (btn) {
+      btn.disabled = false;
+      const parts = [];
+      if (paidRows.length) parts.push(`${paidRows.length} paid`);
+      if (organicRows.length) parts.push(`${organicRows.length} organic`);
+      btn.textContent = `✅ Pushed — ${parts.join(', ')} UTMs`;
+      btn.style.background = 'var(--teal)';
+    }
+    setTimeout(() => {
+      if (btn) { btn.textContent = '📤 Push to Master Sheet'; btn.style.background = ''; }
+    }, 5000);
+  })
+  .catch(err => {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '❌ Push failed — try again';
+      btn.style.background = 'var(--red)';
+    }
+    setTimeout(() => {
+      if (btn) { btn.textContent = '📤 Push to Master Sheet'; btn.style.background = ''; }
+    }, 5000);
+    console.error('Push error:', err);
+  });
+}
+</script>
+
+</div><!-- /#appContent -->
+
+<script>
+(function() {
+  var VALID_USER = 'Performance';
+  var VALID_PASS = 'Admin@123';
+  var SESSION_KEY = 'ttUtmAuthed';
+
+  var overlay = document.getElementById('loginOverlay');
+  var appContent = document.getElementById('appContent');
+  var form = document.getElementById('loginForm');
+  var errorMsg = document.getElementById('loginError');
+
+  function showApp() {
+    overlay.style.display = 'none';
+    appContent.style.display = 'block';
+  }
+
+  if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+    showApp();
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var user = document.getElementById('loginUser').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    if (user === VALID_USER && pass === VALID_PASS) {
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      errorMsg.style.display = 'none';
+      showApp();
+    } else {
+      errorMsg.style.display = 'block';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
